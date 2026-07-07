@@ -185,7 +185,7 @@ export const INITIAL_MEMBERS: Member[] = [
     expiryDate: '2026-07-07', // Expiring in 3 days
     duration: '1 Month',
     status: 'Expiring',
-    profilePhoto: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png',
     history: [
       {
         id: 'hist-1',
@@ -211,7 +211,7 @@ export const INITIAL_MEMBERS: Member[] = [
     expiryDate: '2026-07-04', // Expiring Today
     duration: '1 Month',
     status: 'Expiring',
-    profilePhoto: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/female.png',
     history: [
       {
         id: 'hist-2',
@@ -237,7 +237,7 @@ export const INITIAL_MEMBERS: Member[] = [
     expiryDate: '2026-07-09', // Expiring in 5 days
     duration: '3 Months',
     status: 'Expiring',
-    profilePhoto: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Couple',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/couple.png',
     history: [
       {
         id: 'hist-3',
@@ -263,7 +263,7 @@ export const INITIAL_MEMBERS: Member[] = [
     expiryDate: '2026-07-12', // Expiring in 8 days -> Active
     duration: '1 Month',
     status: 'Active',
-    profilePhoto: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png',
     history: [
       {
         id: 'hist-4',
@@ -289,7 +289,7 @@ export const INITIAL_MEMBERS: Member[] = [
     expiryDate: '2026-06-30', // Expired June 30th
     duration: '1 Month',
     status: 'Expired',
-    profilePhoto: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png',
     history: [
       {
         id: 'hist-5',
@@ -315,7 +315,7 @@ export const INITIAL_MEMBERS: Member[] = [
     expiryDate: '2026-06-20', // Expired June 20th
     duration: '3 Months',
     status: 'Expired',
-    profilePhoto: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png',
     history: [
       {
         id: 'hist-6',
@@ -341,7 +341,7 @@ export const INITIAL_MEMBERS: Member[] = [
     expiryDate: '2026-08-24', // Active, far out
     duration: '6 Months',
     status: 'Active',
-    profilePhoto: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/female.png',
     history: [
       {
         id: 'hist-7',
@@ -367,7 +367,7 @@ export const INITIAL_MEMBERS: Member[] = [
     expiryDate: '2026-06-15', // Cancelled early
     duration: '1 Month',
     status: 'Cancelled',
-    profilePhoto: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png',
     history: [
       {
         id: 'hist-8',
@@ -393,7 +393,7 @@ export const INITIAL_MEMBERS: Member[] = [
     expiryDate: '2026-12-15', // Active
     duration: '12 Months',
     status: 'Active',
-    profilePhoto: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png',
     history: [
       {
         id: 'hist-9',
@@ -419,7 +419,7 @@ export const INITIAL_MEMBERS: Member[] = [
     expiryDate: '2026-06-10',
     duration: '3 Months',
     status: 'Cancelled',
-    profilePhoto: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Couple',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/couple.png',
     history: [
       {
         id: 'hist-10',

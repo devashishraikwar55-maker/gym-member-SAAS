@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface AvatarProps {
   photoUrl?: string;
@@ -7,12 +7,9 @@ interface AvatarProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export const MALE_AVATAR = 'https://api.dicebear.com/7.x/lorelei/svg?seed=Felix';
-export const FEMALE_AVATAR = 'https://api.dicebear.com/7.x/lorelei/svg?seed=Aneka';
-export const COUPLE_AVATAR = 'https://api.dicebear.com/7.x/lorelei/svg?seed=Couple';
-
-const COUPLE_MALE = 'https://api.dicebear.com/7.x/lorelei/svg?seed=Jack';
-const COUPLE_FEMALE = 'https://api.dicebear.com/7.x/lorelei/svg?seed=Lily';
+export const MALE_AVATAR = 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png';
+export const FEMALE_AVATAR = 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/female.png';
+export const COUPLE_AVATAR = 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/couple.png';
 
 export function Avatar({ photoUrl, gender, name, size = 'md' }: AvatarProps) {
   const sizeClasses = {
@@ -31,48 +28,49 @@ export function Avatar({ photoUrl, gender, name, size = 'md' }: AvatarProps) {
     xl: 'text-2xl'
   }[size];
 
-  const isCouple = gender === 'Couple' || (photoUrl && photoUrl.includes('Couple'));
-
-  if (isCouple) {
-    return (
-      <div className={`relative ${sizeClasses} flex-shrink-0 flex items-center justify-center`} id={`avatar-couple-${name.replace(/\s+/g, '-')}`}>
-        {/* Left/Back Avatar (Male) */}
-        <div className="absolute left-0 bottom-0 w-[65%] h-[65%] rounded-full overflow-hidden border-2 border-white bg-blue-50 shadow-xs">
-          <img 
-            src={COUPLE_MALE} 
-            alt="Male Partner" 
-            className="w-full h-full object-cover" 
-            referrerPolicy="no-referrer"
-          />
-        </div>
-        {/* Right/Front Avatar (Female) */}
-        <div className="absolute right-0 top-0 w-[65%] h-[65%] rounded-full overflow-hidden border-2 border-white bg-pink-50 shadow-xs">
-          <img 
-            src={COUPLE_FEMALE} 
-            alt="Female Partner" 
-            className="w-full h-full object-cover" 
-            referrerPolicy="no-referrer"
-          />
-        </div>
-      </div>
-    );
+  // Resolve default avatar based on gender/category
+  let defaultPhoto = MALE_AVATAR;
+  if (gender === 'Female') {
+    defaultPhoto = FEMALE_AVATAR;
+  } else if (gender === 'Couple') {
+    defaultPhoto = COUPLE_AVATAR;
   }
 
-  // Cute single avatar
-  const defaultPhoto = gender === 'Female' ? FEMALE_AVATAR : MALE_AVATAR;
   const finalPhotoUrl = photoUrl || defaultPhoto;
+  
+  // Stateful image source with fallback handlers
+  const [src, setSrc] = useState(finalPhotoUrl);
+  const [hasFailed, setHasFailed] = useState(false);
+
+  useEffect(() => {
+    setSrc(finalPhotoUrl);
+    setHasFailed(false);
+  }, [finalPhotoUrl]);
+
+  const handleError = () => {
+    if (hasFailed) return; // Prevent infinite error loops
+
+    if (src.includes('/co.png')) {
+      setSrc('https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/couple.png');
+      setHasFailed(true);
+    } else if (src.includes('/couple.png')) {
+      setSrc('https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/co.png');
+      setHasFailed(true);
+    }
+  };
 
   return (
-    <div className={`${sizeClasses} rounded-full overflow-hidden bg-gray-50 border border-gray-100 shadow-2xs flex-shrink-0`} id={`avatar-single-${name.replace(/\s+/g, '-')}`}>
-      {finalPhotoUrl ? (
+    <div className={`${sizeClasses} rounded-full overflow-hidden bg-white border border-slate-200/60 shadow-3xs flex-shrink-0 flex items-center justify-center`} id={`avatar-${gender?.toLowerCase() || 'single'}-${name.replace(/\s+/g, '-')}`}>
+      {src ? (
         <img 
-          src={finalPhotoUrl} 
+          src={src} 
           alt={name} 
           className="w-full h-full object-cover" 
           referrerPolicy="no-referrer"
+          onError={handleError}
         />
       ) : (
-        <div className={`w-full h-full bg-indigo-50 text-brand-primary flex items-center justify-center font-bold ${fontClasses}`}>
+        <div className={`w-full h-full bg-slate-50 text-slate-600 flex items-center justify-center font-bold ${fontClasses}`}>
           {name.split(' ').map(n => n[0]).join('')}
         </div>
       )}

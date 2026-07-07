@@ -47,7 +47,24 @@ export default function App() {
       return INITIAL_MEMBERS;
     }
     const saved = localStorage.getItem('gym_reminders_members');
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      try {
+        const parsed: Member[] = JSON.parse(saved);
+        return parsed.map((m: Member) => {
+          if (!m.profilePhoto || m.profilePhoto.includes('dicebear.com') || m.profilePhoto.includes('unsplash.com')) {
+            const defaultPhoto = m.gender === 'Female' 
+              ? 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/female.png'
+              : m.gender === 'Couple'
+                ? 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/couple.png'
+                : 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png';
+            return { ...m, profilePhoto: defaultPhoto };
+          }
+          return m;
+        });
+      } catch (e) {
+        return INITIAL_MEMBERS;
+      }
+    }
     return INITIAL_MEMBERS;
   });
 

@@ -50,8 +50,18 @@ export function Sidebar({
           isCollapsed ? 'w-20' : 'w-64'
         }`}
       >
+        {/* Collapse toggle button (floats elegantly on the right border line) */}
+        <button
+          id="sidebar-toggle-btn"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden lg:flex absolute top-[26px] -right-3 items-center justify-center w-6 h-6 rounded-full border border-slate-800 bg-brand-sidebar text-slate-400 hover:text-white transition-all shadow-md hover:scale-110 cursor-pointer z-50"
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+        </button>
+
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800">
+        <div className={`flex items-center p-5 border-b border-slate-800 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
           <div 
             onClick={() => onNavigate('dashboard')}
             className="flex items-center gap-3 overflow-hidden cursor-pointer group/logo"
@@ -70,15 +80,6 @@ export function Sidebar({
               </motion.span>
             )}
           </div>
-          
-          {/* Collapse toggle button */}
-          <button
-            id="sidebar-toggle-btn"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex items-center justify-center w-6 h-6 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
-          >
-            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
         </div>
 
         {/* Navigation Items */}
@@ -97,7 +98,9 @@ export function Sidebar({
                 key={item.id}
                 id={`sidebar-link-${item.id}`}
                 onClick={() => onNavigate(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all relative group cursor-pointer ${
+                className={`w-full flex items-center rounded-xl text-sm font-medium transition-all relative group cursor-pointer ${
+                  isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
+                } ${
                   isActive ? 'text-white font-semibold' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
                 }`}
               >
@@ -142,9 +145,9 @@ export function Sidebar({
         )}
 
         {/* User profile & Logout */}
-        <div className="p-4 border-t border-slate-800 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
+        <div className={`p-4 border-t border-slate-800 flex ${isCollapsed ? 'flex-col items-center gap-4' : 'items-center justify-between gap-2'}`}>
+          <div className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? 'justify-center' : ''}`}>
+            <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0" title={`${gymName} (Devashish)`}>
               DR
             </div>
             {!isCollapsed && (
@@ -158,7 +161,9 @@ export function Sidebar({
           <button
             id="sidebar-logout-btn"
             onClick={onLogout}
-            className="text-slate-500 hover:text-white hover:bg-slate-800 p-1.5 rounded-lg transition-colors cursor-pointer"
+            className={`text-slate-500 hover:text-white hover:bg-slate-800 p-1.5 rounded-lg transition-colors cursor-pointer ${
+              isCollapsed ? 'w-8 h-8 flex items-center justify-center' : ''
+            }`}
             title="Sign Out"
           >
             <LogOut className="w-4.5 h-4.5" />

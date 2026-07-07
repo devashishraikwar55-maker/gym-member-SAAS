@@ -238,12 +238,14 @@ export function ReminderCenterView({
                   </div>
 
                   {/* Middle: Preview Reminder Text */}
-                  <div className="bg-gray-50/70 p-3 rounded-xl border border-brand-border text-xs text-brand-text-secondary leading-relaxed">
-                    <span className="font-semibold text-brand-text-primary text-[10px] block uppercase tracking-wider mb-1">
-                      Reminder Message Preview:
-                    </span>
-                    "{getReminderMessage(member, activeCategory)}"
-                  </div>
+                  {activeCategory !== 'expired' && (
+                    <div className="bg-gray-50/70 p-3 rounded-xl border border-brand-border text-xs text-brand-text-secondary leading-relaxed">
+                      <span className="font-semibold text-brand-text-primary text-[10px] block uppercase tracking-wider mb-1">
+                        Reminder Message Preview:
+                      </span>
+                      "{getReminderMessage(member, activeCategory)}"
+                    </div>
+                  )}
 
                   {/* Bottom: Action Grid */}
                   <div className="flex items-center justify-between gap-2.5 pt-1">

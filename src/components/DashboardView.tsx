@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Member, ActivityLog, CURRENT_DATE_STR, formatDate } from '../types';
 import { Avatar } from './Avatar';
+import { ChildlikeCalendar } from './ChildlikeCalendar';
 
 interface DashboardViewProps {
   members: Member[];
@@ -324,36 +325,12 @@ export function DashboardView({
 
         </div>
 
-        {/* Right Column: Activity Timeline */}
+        {/* Right Column: Childlike Gym Tracker Calendar */}
         <div className="space-y-4">
-          <h3 className="text-xs font-bold text-[#1F2937] uppercase tracking-wider">
-            Recent Activity
-          </h3>
-          <div className="bg-white border border-[#ECEEF3] rounded-[24px] shadow-sm p-6 space-y-6 max-h-[640px] overflow-y-auto custom-scrollbar">
-            {activityLogs.length > 0 ? (
-              <div className="relative border-l border-[#ECEEF3] ml-2.5 pl-6 space-y-6">
-                {activityLogs.slice(0, 7).map((log) => (
-                  <div key={log.id} id={`log-item-${log.id}`} className="relative group">
-                    {/* Activity Indicator Bullet */}
-                    <div className={`absolute -left-9 top-0.5 w-6 h-6 rounded-full flex items-center justify-center shadow-xs transition-transform group-hover:scale-110 duration-250 ${getActivityBg(log.type)}`}>
-                      {getActivityIcon(log.type)}
-                    </div>
-                    <div>
-                      <p className="text-xs text-[#1F2937] font-semibold leading-relaxed">{log.description}</p>
-                      <span className="text-[10px] text-[#6B7280] mt-1.5 flex items-center gap-1 font-mono uppercase">
-                        <Clock className="w-3 h-3 text-[#6B7280]" />
-                        {new Date(log.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-12 text-center text-xs text-[#6B7280]">
-                No recent activity logged.
-              </div>
-            )}
-          </div>
+          <ChildlikeCalendar 
+            members={members}
+            onSelectMember={onSelectMember}
+          />
         </div>
 
       </div>
