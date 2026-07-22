@@ -29,6 +29,7 @@ import { SettingsView } from './components/SettingsView';
 import { MemberForm } from './components/MemberForm';
 import { MemberDetailsModal } from './components/MemberDetailsModal';
 import { RenewModal } from './components/RenewModal';
+import { OnboardingModal } from './components/OnboardingModal';
 
 export default function App() {
   // --- Auth State ---
@@ -39,9 +40,9 @@ export default function App() {
 
   // --- Core Domain States ---
   const [members, setMembers] = useState<Member[]>(() => {
-    const isUpgraded = localStorage.getItem('gym_reminders_v6_upgrade_gender_avatars');
+    const isUpgraded = localStorage.getItem('gym_reminders_v7_phone_reset');
     if (!isUpgraded) {
-      localStorage.setItem('gym_reminders_v6_upgrade_gender_avatars', 'true');
+      localStorage.setItem('gym_reminders_v7_phone_reset', 'true');
       localStorage.setItem('gym_reminders_members', JSON.stringify(INITIAL_MEMBERS));
       localStorage.setItem('gym_reminders_plans', JSON.stringify(INITIAL_PLANS));
       return INITIAL_MEMBERS;
@@ -102,6 +103,23 @@ export default function App() {
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
   const [memberToRenew, setMemberToRenew] = useState<Member | null>(null);
   const [isRenewOpen, setIsRenewOpen] = useState<boolean>(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() => {
+    const onboarded = localStorage.getItem('gym_reminders_onboarded_v3');
+    return onboarded !== 'true';
+  });
+
+  const handleOnboardingComplete = (ownerName: string, gymName: string) => {
+    const updatedSettings = {
+      ...settings,
+      ownerName,
+      gymName,
+    };
+    setSettings(updatedSettings);
+    localStorage.setItem('gym_reminders_settings', JSON.stringify(updatedSettings));
+    localStorage.setItem('gym_reminders_onboarded_v3', 'true');
+    setIsOnboardingOpen(false);
+    addToast(`Welcome, ${ownerName}! Setup complete for ${gymName}.`, 'success');
+  };
 
   // --- Toast notifications state ---
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -385,10 +403,12 @@ export default function App() {
           <DashboardView 
             members={members}
             activityLogs={activityLogs}
+            ownerName={settings.ownerName}
             onNavigate={setCurrentView}
             onSelectMember={handleSelectMember}
             onRenewClick={(m) => { setMemberToRenew(m); setIsRenewOpen(true); }}
             onSearchClick={() => setIsCommandPaletteOpen(true)}
+            onOpenOnboarding={() => setIsOnboardingOpen(true)}
             onStatClick={(statId) => {
               if (statId === 'stat-total') {
                 setMembersFilter('All');
@@ -471,6 +491,7 @@ export default function App() {
             settings={settings}
             onSaveSettings={handleSaveSettings}
             onResetData={handleResetData}
+            onReRunOnboarding={() => setIsOnboardingOpen(true)}
           />
         );
       default:
@@ -562,6 +583,7 @@ export default function App() {
         onNavigate={handleNavigate}
         onLogout={handleLogout}
         gymName={settings.gymName}
+        ownerName={settings.ownerName}
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
       />
@@ -617,6 +639,14 @@ export default function App() {
         member={memberToRenew}
         plans={plans}
         onRenew={handleRenewMember}
+      />
+
+      {/* User Onboarding Setup Flow */}
+      <OnboardingModal
+        isOpen={isOnboardingOpen && isLoggedIn}
+        initialOwnerName={settings.ownerName}
+        initialGymName={settings.gymName}
+        onComplete={handleOnboardingComplete}
       />
 
       {/* Live Toast Toast notifications container */}

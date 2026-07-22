@@ -219,13 +219,13 @@ export function MembersView({
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25, delay: Math.min(idx * 0.03, 0.4) }}
-                      className="text-sm hover:bg-gray-50/50 transition-colors cursor-pointer"
+                      className="text-sm hover:bg-indigo-50/20 hover:scale-[1.008] hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 transform-gpu cursor-pointer group"
                       onClick={() => onSelectMember(member.id)}
                     >
                       <td className="px-5 py-3.5 flex items-center gap-3">
                         <Avatar photoUrl={member.profilePhoto} gender={member.gender} name={member.name} size="sm" />
                         <div>
-                          <span className="font-semibold text-brand-text-primary block">{member.name}</span>
+                          <span className="font-semibold text-brand-text-primary group-hover:text-brand-primary transition-colors duration-200 block">{member.name}</span>
                           <span className="text-[10px] text-brand-text-secondary mt-0.5 font-medium">{member.duration} Plan</span>
                         </div>
                       </td>

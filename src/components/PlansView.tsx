@@ -35,8 +35,12 @@ export function PlansView({ plans, members }: PlansViewProps) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: idx * 0.05 }}
-              whileHover={{ y: -4, boxY: 15, shadow: 'lg', borderColor: isPopular ? 'rgba(108, 99, 255, 0.4)' : 'rgba(0,0,0,0.1)' }}
-              className={`bg-white rounded-2xl border p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
+              whileHover={{ 
+                y: -5, 
+                scale: 1.02,
+                boxShadow: '0 12px 24px -8px rgba(108, 99, 255, 0.18)'
+              }}
+              className={`bg-white rounded-2xl border p-5 flex flex-col justify-between relative overflow-hidden transform-gpu cursor-pointer ${
                 isPopular 
                   ? 'border-brand-primary shadow-md' 
                   : 'border-brand-border shadow-2xs'

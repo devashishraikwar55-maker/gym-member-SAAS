@@ -19,6 +19,7 @@ interface SidebarProps {
   onNavigate: (view: string) => void;
   onLogout: () => void;
   gymName: string;
+  ownerName?: string;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
 }
@@ -28,9 +29,18 @@ export function Sidebar({
   onNavigate, 
   onLogout, 
   gymName,
+  ownerName = 'Gym Owner',
   isCollapsed,
   setIsCollapsed
 }: SidebarProps) {
+  const getInitials = (str: string) => {
+    if (!str) return 'GO';
+    const parts = str.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return parts[0].slice(0, 2).toUpperCase();
+  };
+
+  const initials = getInitials(ownerName);
   
   const menuItems = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
@@ -98,10 +108,10 @@ export function Sidebar({
                 key={item.id}
                 id={`sidebar-link-${item.id}`}
                 onClick={() => onNavigate(item.id)}
-                className={`w-full flex items-center rounded-xl text-sm font-medium transition-all relative group cursor-pointer ${
+                className={`w-full flex items-center rounded-xl text-sm font-medium transition-all duration-200 transform-gpu hover:scale-[1.02] active:scale-[0.98] relative group cursor-pointer ${
                   isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
                 } ${
-                  isActive ? 'text-white font-semibold' : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                  isActive ? 'text-white font-semibold' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
                 {/* Active Indicator Slide Animation */}
@@ -147,13 +157,13 @@ export function Sidebar({
         {/* User profile & Logout */}
         <div className={`p-4 border-t border-slate-800 flex ${isCollapsed ? 'flex-col items-center gap-4' : 'items-center justify-between gap-2'}`}>
           <div className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? 'justify-center' : ''}`}>
-            <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0" title={`${gymName} (Devashish)`}>
-              DR
+            <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs flex-shrink-0" title={`${gymName} (${ownerName})`}>
+              {initials}
             </div>
             {!isCollapsed && (
               <div className="overflow-hidden">
                 <p className="text-xs font-semibold text-slate-200 truncate">{gymName}</p>
-                <p className="text-[10px] text-slate-500 truncate">Devashish (Owner)</p>
+                <p className="text-[10px] text-slate-500 truncate">{ownerName} (Owner)</p>
               </div>
             )}
           </div>

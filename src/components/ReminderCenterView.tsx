@@ -1,17 +1,12 @@
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
-  Bell, 
-  Copy, 
-  Check, 
-  MessageSquare, 
   RefreshCw, 
-  Calendar, 
-  User, 
   Clock, 
-  AlertTriangle,
-  ExternalLink,
-  ChevronRight
+  Eye, 
+  Search, 
+  X,
+  AlertCircle
 } from 'lucide-react';
 import { Member, SystemSettings, CURRENT_DATE_STR, getDaysDiff, formatDate } from '../types';
 import { Avatar } from './Avatar';
@@ -21,283 +16,167 @@ interface ReminderCenterViewProps {
   settings: SystemSettings;
   onSelectMember: (id: string) => void;
   onRenewClick: (member: Member) => void;
-  onCopySuccess: (msg: string) => void;
-  initialCategory?: ReminderCategory;
-  onCategoryChange?: (category: ReminderCategory) => void;
+  onCopySuccess?: (msg: string) => void;
+  initialCategory?: string;
+  onCategoryChange?: (cat: any) => void;
 }
-
-type ReminderCategory = 'today' | '3days' | '7days' | 'expired';
 
 export function ReminderCenterView({ 
   members, 
-  settings, 
   onSelectMember, 
-  onRenewClick,
-  onCopySuccess,
-  initialCategory,
-  onCategoryChange
+  onRenewClick
 }: ReminderCenterViewProps) {
-  
-  const [activeCategory, setActiveCategory] = useState<ReminderCategory>(initialCategory || 'today');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Sync activeCategory with initialCategory when it changes
-  useEffect(() => {
-    if (initialCategory) {
-      setActiveCategory(initialCategory);
-    }
-  }, [initialCategory]);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleCategoryChange = (category: ReminderCategory) => {
-    setActiveCategory(category);
-    if (onCategoryChange) {
-      onCategoryChange(category);
-    }
-  };
-
-  // Exclude Cancelled members from active reminders
+  // Exclude Cancelled members
   const activeReminderMembers = members.filter(m => m.status !== 'Cancelled');
 
-  // Categorize members based on day diff relative to July 4, 2026
-  const getCategorizedMembers = () => {
-    const today: Member[] = [];
-    const in3Days: Member[] = [];
-    const in7Days: Member[] = [];
-    const expired: Member[] = [];
+  // Filter members expiring soon or already expired, sorted by nearest expiry
+  const expiringMembers = activeReminderMembers
+    .map(m => ({
+      member: m,
+      daysDiff: getDaysDiff(CURRENT_DATE_STR, m.expiryDate)
+    }))
+    .filter(item => item.daysDiff <= 30) // expiring within 30 days or expired
+    .sort((a, b) => a.daysDiff - b.daysDiff);
 
-    activeReminderMembers.forEach((m) => {
-      const diff = getDaysDiff(CURRENT_DATE_STR, m.expiryDate);
-      
-      if (diff < 0) {
-        expired.push(m);
-      } else if (diff === 0) {
-        today.push(m);
-      } else if (diff > 0 && diff <= 3) {
-        in3Days.push(m);
-      } else if (diff > 3 && diff <= 7) {
-        in7Days.push(m);
-      }
-    });
-
-    return { today, '3days': in3Days, '7days': in7Days, expired };
-  };
-
-  const categories = getCategorizedMembers();
-  const currentCategoryMembers = categories[activeCategory];
-
-  // Message generation helper
-  const getReminderMessage = (member: Member, category: ReminderCategory) => {
-    let template = '';
-    switch (category) {
-      case 'today':
-        template = settings.reminderTemplates.expiringToday;
-        break;
-      case '3days':
-        template = settings.reminderTemplates.expiring3Days;
-        break;
-      case '7days':
-        template = settings.reminderTemplates.expiring7Days;
-        break;
-      case 'expired':
-        template = `Hi {name}, your Apex Fitness Club membership expired on {date}. We miss seeing you around! Renew today to continue your fitness journey.`;
-        break;
-    }
-
-    return template
-      .replace('{name}', member.name)
-      .replace('{date}', formatDate(member.expiryDate));
-  };
-
-  const handleCopyMessage = (member: Member, category: ReminderCategory) => {
-    const text = getReminderMessage(member, category);
-    navigator.clipboard.writeText(text);
-    setCopiedId(member.id);
-    onCopySuccess(`Reminder message for ${member.name} copied to clipboard!`);
-    
-    setTimeout(() => {
-      setCopiedId(null);
-    }, 2500);
-  };
-
-  // Open direct WhatsApp web if desired
-  const handleOpenWhatsApp = (member: Member, category: ReminderCategory) => {
-    const text = encodeURIComponent(getReminderMessage(member, category));
-    // Clean phone number (removing any spaces/dashes)
-    const cleanPhone = member.phone.replace(/[^0-9]/g, '');
-    const whatsappUrl = `https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}?text=${text}`;
-    window.open(whatsappUrl, '_blank');
-  };
+  const filteredMembers = expiringMembers.filter(({ member }) =>
+    member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    member.phone.includes(searchQuery)
+  );
 
   return (
     <div id="reminder-center-container" className="space-y-6 pb-12">
-      {/* View Header */}
-      <div className="hidden md:block">
+      {/* Header */}
+      <div>
         <h1 className="text-2xl font-bold text-brand-text-primary tracking-tight">Expiring Membership</h1>
-        <p className="text-xs text-brand-text-secondary mt-0.5">Automate member follow-ups. Select lists, copy messages, and manage renewals.</p>
+        <p className="text-xs text-brand-text-secondary mt-0.5">Manage and track members with upcoming or past membership expiries.</p>
       </div>
 
-      {/* Grid Categories Selector (Custom modern tabs) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-white p-2 border border-brand-border rounded-2xl shadow-2xs">
-        {[
-          { id: 'today', label: 'Expiring Today', count: categories.today.length, badge: 'bg-red-100 text-brand-danger' },
-          { id: '3days', label: 'Expiring in 3 Days', count: categories['3days'].length, badge: 'bg-amber-100 text-brand-warning' },
-          { id: '7days', label: 'Expiring in 7 Days', count: categories['7days'].length, badge: 'bg-indigo-50 text-brand-primary' },
-          { id: 'expired', label: 'Expired Members', count: categories.expired.length, badge: 'bg-rose-100 text-brand-danger' },
-        ].map((cat) => {
-          const isActive = activeCategory === cat.id;
-          return (
+      {/* Search and Records Header */}
+      <div className="bg-white p-4 border border-brand-border rounded-2xl shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative w-full sm:w-80 group">
+          <Search className="absolute left-3 top-2.5 w-4.5 h-4.5 text-gray-400 group-focus-within:text-brand-primary transition-colors" />
+          <input
+            id="expiring-search-input"
+            type="text"
+            className="w-full pl-9 pr-8 py-2 border border-brand-border rounded-xl text-xs text-brand-text-primary focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary bg-gray-50/10 placeholder-gray-400"
+            placeholder="Search expiring members by name or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
             <button
-              key={cat.id}
-              id={`reminder-tab-${cat.id}`}
-              onClick={() => handleCategoryChange(cat.id as ReminderCategory)}
-              className={`p-3 rounded-xl transition-all text-left flex flex-col justify-between h-[80px] cursor-pointer ${
-                isActive 
-                  ? 'bg-brand-sidebar text-white shadow-md font-semibold' 
-                  : 'bg-gray-50 hover:bg-gray-100 text-brand-text-primary'
-              }`}
+              id="clear-expiring-search"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 rounded-full cursor-pointer"
             >
-              <span className={`text-[10px] uppercase tracking-wider font-semibold ${isActive ? 'text-slate-400' : 'text-brand-text-secondary'}`}>
-                {cat.label}
-              </span>
-              <div className="flex items-center justify-between w-full mt-2">
-                <span className="text-xl font-bold tracking-tight">{cat.count}</span>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isActive ? 'bg-indigo-500/30 text-indigo-200' : cat.badge}`}>
-                  Members
-                </span>
-              </div>
+              <X className="w-4 h-4" />
             </button>
-          );
-        })}
+          )}
+        </div>
+        <span className="text-xs text-brand-text-secondary font-medium">{filteredMembers.length} records</span>
       </div>
 
-      {/* Reminder Cards Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-brand-text-primary uppercase tracking-wider flex items-center gap-1.5">
-            <Bell className="w-4 h-4 text-brand-primary" />
-            Reminders for {
-              {
-                today: 'Members Expiring Today',
-                '3days': 'Members Expiring in 3 Days',
-                '7days': 'Members Expiring in 7 Days',
-                expired: 'Members Currently Expired'
-              }[activeCategory]
-            }
-          </h3>
-          <span className="text-xs text-brand-text-secondary font-medium">{currentCategoryMembers.length} records</span>
-        </div>
+      {/* Table matching MembersView and CancelledView style */}
+      <div className="bg-white border border-brand-border rounded-2xl shadow-2xs overflow-hidden">
+        {filteredMembers.length > 0 ? (
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-brand-border text-brand-text-secondary text-[11px] uppercase font-bold tracking-wider">
+                  <th className="px-5 py-3">Member Name</th>
+                  <th className="px-5 py-3">Phone</th>
+                  <th className="px-5 py-3">Gender</th>
+                  <th className="px-5 py-3">Joining Date</th>
+                  <th className="px-5 py-3">Expiry Date</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-brand-border">
+                {filteredMembers.map(({ member, daysDiff }, idx) => {
+                  const statusStyles = {
+                    Active: 'bg-green-50 text-brand-success border border-green-100',
+                    Expiring: 'bg-amber-50 text-brand-warning border border-amber-100',
+                    Expired: 'bg-red-50 text-brand-danger border border-red-100',
+                    Cancelled: 'bg-gray-100 text-brand-text-secondary border border-gray-200'
+                  }[member.status];
 
-        {currentCategoryMembers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {currentCategoryMembers.map((member) => {
-              const diff = getDaysDiff(CURRENT_DATE_STR, member.expiryDate);
-              const isCopied = copiedId === member.id;
-
-              return (
-                <motion.div
-                  key={member.id}
-                  id={`reminder-card-${member.id}`}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.25 }}
-                  whileHover={{ y: -2, boxShadow: '0 10px 20px -10px rgba(0,0,0,0.08)' }}
-                  className="bg-white p-5 rounded-2xl border border-brand-border shadow-2xs flex flex-col justify-between gap-4 transition-all"
-                >
-                  {/* Top: Identity */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar photoUrl={member.profilePhoto} gender={member.gender} name={member.name} size="md" />
-                      <div>
-                        <button 
-                          id={`reminder-name-btn-${member.id}`}
-                          onClick={() => onSelectMember(member.id)}
-                          className="font-bold text-brand-text-primary hover:text-brand-primary hover:underline text-left text-sm"
-                        >
-                          {member.name}
-                        </button>
-                        <p className="text-xs text-brand-text-secondary mt-0.5 font-mono">{member.phone}</p>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      {diff === 0 ? (
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-red-100 text-brand-danger rounded-full">
-                          Expires Today
-                        </span>
-                      ) : diff < 0 ? (
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-red-50 text-brand-danger rounded-full">
-                          {Math.abs(diff)} Days Overdue
-                        </span>
-                      ) : (
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-amber-100 text-brand-warning rounded-full">
-                          {diff} Days Left
-                        </span>
-                      )}
-                      <p className="text-[10px] text-brand-text-secondary mt-1 font-medium">{member.duration} Plan</p>
-                    </div>
-                  </div>
-
-                  {/* Middle: Preview Reminder Text */}
-                  {activeCategory !== 'expired' && (
-                    <div className="bg-gray-50/70 p-3 rounded-xl border border-brand-border text-xs text-brand-text-secondary leading-relaxed">
-                      <span className="font-semibold text-brand-text-primary text-[10px] block uppercase tracking-wider mb-1">
-                        Reminder Message Preview:
-                      </span>
-                      "{getReminderMessage(member, activeCategory)}"
-                    </div>
-                  )}
-
-                  {/* Bottom: Action Grid */}
-                  <div className="flex items-center justify-between gap-2.5 pt-1">
-                    <div className="flex items-center gap-1.5">
-                      {/* Copy action */}
-                      <button
-                        id={`copy-rem-btn-${member.id}`}
-                        onClick={() => handleCopyMessage(member, activeCategory)}
-                        className={`p-2 rounded-xl border text-xs font-medium flex items-center gap-1 transition-all cursor-pointer ${
-                          isCopied 
-                            ? 'bg-green-50 border-green-200 text-brand-success' 
-                            : 'bg-white border-brand-border text-brand-text-secondary hover:bg-gray-50'
-                        }`}
-                        title="Copy text message"
-                      >
-                        {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                        {isCopied ? 'Copied' : 'Copy'}
-                      </button>
-
-                      {/* WhatsApp action */}
-                      <button
-                        id={`whatsapp-rem-btn-${member.id}`}
-                        onClick={() => handleOpenWhatsApp(member, activeCategory)}
-                        className="p-2 bg-green-50/50 hover:bg-green-50 border border-green-100 rounded-xl text-xs font-semibold text-green-600 flex items-center gap-1 transition-all cursor-pointer"
-                        title="Send via WhatsApp"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        WhatsApp
-                      </button>
-                    </div>
-
-                    <button
-                      id={`renew-rem-btn-${member.id}`}
-                      onClick={() => onRenewClick(member)}
-                      className="bg-brand-primary hover:bg-brand-primary-hover text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
+                  return (
+                    <motion.tr
+                      key={member.id}
+                      id={`expiring-row-${member.id}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: Math.min(idx * 0.03, 0.4) }}
+                      className="text-sm hover:bg-indigo-50/20 hover:scale-[1.008] hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 transform-gpu cursor-pointer group"
+                      onClick={() => onSelectMember(member.id)}
                     >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      Renew Membership
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })}
+                      <td className="px-5 py-3.5 flex items-center gap-3">
+                        <Avatar photoUrl={member.profilePhoto} gender={member.gender} name={member.name} size="sm" />
+                        <div>
+                          <span className="font-semibold text-brand-text-primary group-hover:text-brand-primary transition-colors duration-200 block">{member.name}</span>
+                          <span className="text-[10px] text-brand-text-secondary mt-0.5 font-medium">{member.duration} Plan</span>
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-3.5 text-brand-text-secondary font-mono text-xs">{member.phone}</td>
+                      <td className="px-5 py-3.5 text-brand-text-secondary text-xs">{member.gender}</td>
+                      <td className="px-5 py-3.5 text-brand-text-secondary text-xs">{formatDate(member.joiningDate)}</td>
+                      <td className="px-5 py-3.5 text-brand-text-secondary text-xs">
+                        <span className="font-medium text-slate-900 block">{formatDate(member.expiryDate)}</span>
+                        {daysDiff < 0 ? (
+                          <span className="text-[10px] text-rose-600 font-bold">{Math.abs(daysDiff)}d overdue</span>
+                        ) : daysDiff === 0 ? (
+                          <span className="text-[10px] text-red-600 font-bold">Expires today</span>
+                        ) : (
+                          <span className="text-[10px] text-amber-600 font-bold">{daysDiff}d remaining</span>
+                        )}
+                      </td>
+
+                      <td className="px-5 py-3.5">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusStyles}`}>
+                          {member.status}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            id={`expiring-quick-view-btn-${member.id}`}
+                            onClick={() => onSelectMember(member.id)}
+                            className="p-1.5 hover:bg-gray-100 text-gray-500 hover:text-brand-text-primary rounded-lg transition-colors cursor-pointer"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            id={`expiring-quick-renew-btn-${member.id}`}
+                            onClick={() => onRenewClick(member)}
+                            className="text-xs font-semibold text-brand-primary hover:bg-indigo-50 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            Renew
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         ) : (
-          <div className="bg-white border border-brand-border p-12 rounded-2xl shadow-2xs text-center max-w-md mx-auto">
-            <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-100">
-              <Check className="w-6 h-6 text-brand-success stroke-[2.5]" />
+          <div className="p-12 text-center max-w-md mx-auto">
+            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+              <Clock className="w-6 h-6" />
             </div>
-            <p className="text-base font-bold text-brand-text-primary">All caught up! 🎉</p>
+            <p className="text-base font-bold text-brand-text-primary">No expiring members found</p>
             <p className="text-xs text-brand-text-secondary mt-1">
-              No members require follow-ups in this specific category. Well done keeping track!
+              {searchQuery ? `No expiring members match "${searchQuery}".` : 'All active members have plenty of time remaining.'}
             </p>
           </div>
         )}

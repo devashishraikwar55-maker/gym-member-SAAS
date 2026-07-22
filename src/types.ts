@@ -48,6 +48,7 @@ export interface ActivityLog {
 
 export interface SystemSettings {
   gymName: string;
+  ownerName?: string;
   currency: string;
   reminderTemplates: {
     expiringToday: string;
@@ -174,7 +175,7 @@ export const INITIAL_MEMBERS: Member[] = [
   {
     id: 'mem-1',
     name: 'Rahul Sharma',
-    phone: '9876543210',
+    phone: '123456789',
     gender: 'Male',
     age: 28,
     address: '104, Sector 15, Dwarka, New Delhi',
@@ -200,7 +201,7 @@ export const INITIAL_MEMBERS: Member[] = [
   {
     id: 'mem-2',
     name: 'Neha Singh',
-    phone: '9234567890',
+    phone: '123456789',
     gender: 'Female',
     age: 25,
     address: 'B-45, Green Park, South Ext, New Delhi',
@@ -226,7 +227,7 @@ export const INITIAL_MEMBERS: Member[] = [
   {
     id: 'mem-3',
     name: 'Amit & Sunita Verma',
-    phone: '9123456780',
+    phone: '123456789',
     gender: 'Couple',
     age: 31,
     address: 'Flat 502, Orchid Apartments, Noida Sec 62',
@@ -252,7 +253,7 @@ export const INITIAL_MEMBERS: Member[] = [
   {
     id: 'mem-4',
     name: 'Sahil Khan',
-    phone: '9012345678',
+    phone: '123456789',
     gender: 'Male',
     age: 29,
     address: 'House 14, Gali 2, Jamia Nagar, New Delhi',
@@ -278,7 +279,7 @@ export const INITIAL_MEMBERS: Member[] = [
   {
     id: 'mem-5',
     name: 'Karan Patel',
-    phone: '9880000088',
+    phone: '123456789',
     gender: 'Male',
     age: 34,
     address: 'A-201, Elite Residency, Gurugram Sec 45',
@@ -304,7 +305,7 @@ export const INITIAL_MEMBERS: Member[] = [
   {
     id: 'mem-6',
     name: 'Rohit Kumar',
-    phone: '9876543211',
+    phone: '123456789',
     gender: 'Male',
     age: 27,
     address: 'C-3, Patel Nagar, West Delhi',
@@ -330,7 +331,7 @@ export const INITIAL_MEMBERS: Member[] = [
   {
     id: 'mem-7',
     name: 'Pooja Patel',
-    phone: '9988776655',
+    phone: '123456789',
     gender: 'Female',
     age: 26,
     address: '78, Vasant Kunj, Pocket B, New Delhi',
@@ -354,35 +355,9 @@ export const INITIAL_MEMBERS: Member[] = [
     ]
   },
   {
-    id: 'mem-8',
-    name: 'Aman Singh',
-    phone: '9123456789',
-    gender: 'Male',
-    age: 22,
-    address: 'House No 89, Karol Bagh, New Delhi',
-    membershipPlanId: 'plan-1',
-    membershipFee: 2000,
-    paymentStatus: 'Paid',
-    joiningDate: '2026-05-15',
-    expiryDate: '2026-06-15', // Cancelled early
-    duration: '1 Month',
-    status: 'Cancelled',
-    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png',
-    history: [
-      {
-        id: 'hist-8',
-        planName: '1 Month Plan',
-        fee: 2000,
-        joiningDate: '2026-05-15',
-        expiryDate: '2026-06-15',
-        status: 'Cancelled',
-      }
-    ]
-  },
-  {
     id: 'mem-9',
     name: 'Vikram Mehta',
-    phone: '8899001122',
+    phone: '123456789',
     gender: 'Male',
     age: 36,
     address: 'F-12, Malviya Nagar, New Delhi',
@@ -402,32 +377,6 @@ export const INITIAL_MEMBERS: Member[] = [
         joiningDate: '2025-12-15',
         expiryDate: '2026-12-15',
         status: 'Active',
-      }
-    ]
-  },
-  {
-    id: 'mem-10',
-    name: 'Ankit & Ritu Jain',
-    phone: '7766554433',
-    gender: 'Couple',
-    age: 30,
-    address: 'C-234, Vikaspuri, New Delhi',
-    membershipPlanId: 'plan-3',
-    membershipFee: 5000,
-    paymentStatus: 'Paid',
-    joiningDate: '2026-03-10',
-    expiryDate: '2026-06-10',
-    duration: '3 Months',
-    status: 'Cancelled',
-    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/couple.png',
-    history: [
-      {
-        id: 'hist-10',
-        planName: '3 Months Plan',
-        fee: 5000,
-        joiningDate: '2026-03-10',
-        expiryDate: '2026-06-10',
-        status: 'Cancelled',
       }
     ]
   }
@@ -470,6 +419,7 @@ export const INITIAL_ACTIVITY_LOGS: ActivityLog[] = [
 
 export const DEFAULT_SETTINGS: SystemSettings = {
   gymName: 'Apex Fitness Club',
+  ownerName: 'Devashish Raikwar',
   currency: '₹',
   reminderTemplates: {
     expiringToday: 'Hi {name}, your Apex Fitness membership expires TODAY! To avoid any interruption, please renew now. Feel free to reply or call us for help.',

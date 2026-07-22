@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { User, Users } from 'lucide-react';
 
 interface AvatarProps {
   photoUrl?: string;
@@ -28,6 +29,14 @@ export function Avatar({ photoUrl, gender, name, size = 'md' }: AvatarProps) {
     xl: 'text-2xl'
   }[size];
 
+  const iconSizes = {
+    xs: 'w-3 h-3',
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-6 h-6',
+    xl: 'w-10 h-10'
+  }[size];
+
   // Resolve default avatar based on gender/category
   let defaultPhoto = MALE_AVATAR;
   if (gender === 'Female') {
@@ -48,32 +57,53 @@ export function Avatar({ photoUrl, gender, name, size = 'md' }: AvatarProps) {
   }, [finalPhotoUrl]);
 
   const handleError = () => {
-    if (hasFailed) return; // Prevent infinite error loops
-
     if (src.includes('/co.png')) {
       setSrc('https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/couple.png');
-      setHasFailed(true);
-    } else if (src.includes('/couple.png')) {
-      setSrc('https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/co.png');
+    } else {
       setHasFailed(true);
     }
   };
 
+  // Render high-quality vector illustration avatar fallback if image failed or isn't available
+  if (hasFailed || !src) {
+    const initials = name
+      ? name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+      : 'GM';
+
+    return (
+      <div 
+        id={`avatar-${gender?.toLowerCase() || 'single'}-${name.replace(/\s+/g, '-')}`}
+        className={`${sizeClasses} rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-3xs transition-all ${
+          gender === 'Female' 
+            ? 'bg-gradient-to-br from-rose-100 to-pink-200 border-rose-200 text-rose-700' 
+            : gender === 'Couple' 
+              ? 'bg-gradient-to-br from-purple-100 to-indigo-200 border-purple-200 text-purple-700' 
+              : 'bg-gradient-to-br from-blue-100 to-indigo-200 border-blue-200 text-blue-700'
+        }`}
+        title={name}
+      >
+        {gender === 'Couple' ? (
+          <Users className={`${iconSizes} stroke-[2.2]`} />
+        ) : (
+          <User className={`${iconSizes} stroke-[2.2]`} />
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className={`${sizeClasses} rounded-full overflow-hidden bg-white border border-slate-200/60 shadow-3xs flex-shrink-0 flex items-center justify-center`} id={`avatar-${gender?.toLowerCase() || 'single'}-${name.replace(/\s+/g, '-')}`}>
-      {src ? (
-        <img 
-          src={src} 
-          alt={name} 
-          className="w-full h-full object-cover" 
-          referrerPolicy="no-referrer"
-          onError={handleError}
-        />
-      ) : (
-        <div className={`w-full h-full bg-slate-50 text-slate-600 flex items-center justify-center font-bold ${fontClasses}`}>
-          {name.split(' ').map(n => n[0]).join('')}
-        </div>
-      )}
+    <div 
+      className={`${sizeClasses} rounded-full overflow-hidden bg-slate-100 border border-slate-200/60 shadow-3xs flex-shrink-0 flex items-center justify-center`} 
+      id={`avatar-${gender?.toLowerCase() || 'single'}-${name.replace(/\s+/g, '-')}`}
+    >
+      <img 
+        src={src} 
+        alt={name} 
+        className="w-full h-full object-cover" 
+        referrerPolicy="no-referrer"
+        onError={handleError}
+      />
     </div>
   );
 }
+

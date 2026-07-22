@@ -68,84 +68,92 @@ export function CancelledView({
         <span className="text-xs text-brand-text-secondary font-medium">{filteredMembers.length} records</span>
       </div>
 
-      {/* Grid of Cancelled Members */}
-      {filteredMembers.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredMembers.map((member, idx) => (
-            <motion.div
-              key={member.id}
-              id={`cancelled-card-${member.id}`}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: idx * 0.05 }}
-              whileHover={{ y: -2, boxShadow: '0 10px 20px -10px rgba(0,0,0,0.08)' }}
-              className="bg-white p-5 border border-brand-border rounded-2xl shadow-2xs flex flex-col justify-between gap-4 transition-all"
-            >
-              {/* Profile identity and history trigger */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="grayscale">
-                    <Avatar photoUrl={member.profilePhoto} gender={member.gender} name={member.name} size="md" />
-                  </div>
-                  <div>
-                    <button 
-                      id={`cancelled-member-name-${member.id}`}
-                      onClick={() => onSelectMember(member.id)}
-                      className="font-bold text-brand-text-primary hover:text-brand-primary hover:underline text-left text-sm"
-                    >
-                      {member.name}
-                    </button>
-                    <p className="text-xs text-brand-text-secondary mt-0.5 font-mono">{member.phone}</p>
-                  </div>
-                </div>
+      {/* Table matching MembersView and ReminderCenterView style */}
+      <div className="bg-white border border-brand-border rounded-2xl shadow-2xs overflow-hidden">
+        {filteredMembers.length > 0 ? (
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-brand-border text-brand-text-secondary text-[11px] uppercase font-bold tracking-wider">
+                  <th className="px-5 py-3">Member Name</th>
+                  <th className="px-5 py-3">Phone</th>
+                  <th className="px-5 py-3">Gender</th>
+                  <th className="px-5 py-3">Joining Date</th>
+                  <th className="px-5 py-3">Expiry Date</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-brand-border">
+                {filteredMembers.map((member, idx) => (
+                  <motion.tr
+                    key={member.id}
+                    id={`cancelled-row-${member.id}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: Math.min(idx * 0.03, 0.4) }}
+                    className="text-sm hover:bg-indigo-50/20 hover:scale-[1.008] hover:-translate-y-0.5 hover:shadow-xs transition-all duration-200 transform-gpu cursor-pointer group"
+                    onClick={() => onSelectMember(member.id)}
+                  >
+                    <td className="px-5 py-3.5 flex items-center gap-3">
+                      <div className="grayscale opacity-75 group-hover:grayscale-0 transition-all">
+                        <Avatar photoUrl={member.profilePhoto} gender={member.gender} name={member.name} size="sm" />
+                      </div>
+                      <div>
+                        <span className="font-semibold text-brand-text-primary group-hover:text-brand-primary transition-colors duration-200 block">{member.name}</span>
+                        <span className="text-[10px] text-brand-text-secondary mt-0.5 font-medium">{member.duration} Plan</span>
+                      </div>
+                    </td>
 
-                <span className="text-[10px] uppercase font-bold text-slate-400 bg-gray-100 px-2.5 py-0.5 rounded-full border border-gray-200">
-                  Inactive
-                </span>
-              </div>
+                    <td className="px-5 py-3.5 text-brand-text-secondary font-mono text-xs">{member.phone}</td>
+                    <td className="px-5 py-3.5 text-brand-text-secondary text-xs">{member.gender}</td>
+                    <td className="px-5 py-3.5 text-brand-text-secondary text-xs">{formatDate(member.joiningDate)}</td>
+                    <td className="px-5 py-3.5 text-brand-text-secondary text-xs">{formatDate(member.expiryDate)}</td>
 
-              {/* History stats info */}
-              <div className="flex items-center justify-between text-xs text-brand-text-secondary pt-1 border-t border-gray-50">
-                <div className="flex items-center gap-1">
-                  <History className="w-3.5 h-3.5 text-gray-400" />
-                  <span>{member.history ? member.history.length : 0} past renewal cycles</span>
-                </div>
-                <span>Joined {formatDate(member.joiningDate)}</span>
-              </div>
+                    <td className="px-5 py-3.5">
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-brand-text-secondary border border-gray-200">
+                        Cancelled
+                      </span>
+                    </td>
 
-              {/* Renew triggers */}
-              <div className="flex items-center justify-between gap-2.5 pt-2">
-                <button
-                  id={`cancelled-view-details-${member.id}`}
-                  onClick={() => onSelectMember(member.id)}
-                  className="px-3.5 py-2 border border-brand-border text-brand-text-secondary hover:text-brand-text-primary hover:bg-gray-50 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  View Details & History
-                </button>
+                    <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          id={`cancelled-quick-view-btn-${member.id}`}
+                          onClick={() => onSelectMember(member.id)}
+                          className="p-1.5 hover:bg-gray-100 text-gray-500 hover:text-brand-text-primary rounded-lg transition-colors cursor-pointer"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
 
-                <button
-                  id={`cancelled-re-enrol-${member.id}`}
-                  onClick={() => onRenewClick(member)}
-                  className="bg-brand-primary hover:bg-brand-primary-hover text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer hover:shadow-md"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Re-Enrol Member
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-white border border-brand-border p-12 rounded-2xl shadow-2xs text-center max-w-md mx-auto">
-          <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-            <UserX className="w-6 h-6 text-gray-400" />
+                        <button
+                          id={`cancelled-quick-re-enrol-btn-${member.id}`}
+                          onClick={() => onRenewClick(member)}
+                          className="text-xs font-semibold text-brand-primary hover:bg-indigo-50 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Re-Enrol
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <p className="text-base font-bold text-brand-text-primary">No cancelled records</p>
-          <p className="text-xs text-brand-text-secondary mt-1">
-            {searchQuery ? `No cancelled members matched "${searchQuery}".` : 'Excellent! Currently, there are no cancelled memberships in your archive.'}
-          </p>
-        </div>
-      )}
+        ) : (
+          <div className="p-12 text-center max-w-md mx-auto">
+            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+              <UserX className="w-6 h-6 text-gray-400" />
+            </div>
+            <p className="text-base font-bold text-brand-text-primary">No cancelled records</p>
+            <p className="text-xs text-brand-text-secondary mt-1">
+              {searchQuery ? `No cancelled members matched "${searchQuery}".` : 'Excellent! Currently, there are no cancelled memberships in your archive.'}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

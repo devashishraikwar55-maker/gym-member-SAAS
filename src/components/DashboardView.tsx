@@ -13,8 +13,8 @@ import {
   ChevronRight, 
   HelpCircle,
   Clock,
-  ArrowUpRight,
-  Search
+  Search,
+  Sparkles
 } from 'lucide-react';
 import { Member, ActivityLog, CURRENT_DATE_STR, formatDate } from '../types';
 import { Avatar } from './Avatar';
@@ -23,21 +23,25 @@ import { ChildlikeCalendar } from './ChildlikeCalendar';
 interface DashboardViewProps {
   members: Member[];
   activityLogs: ActivityLog[];
+  ownerName?: string;
   onNavigate: (view: string) => void;
   onSelectMember: (id: string) => void;
   onRenewClick: (member: Member) => void;
   onStatClick?: (statId: string) => void;
   onSearchClick?: () => void;
+  onOpenOnboarding?: () => void;
 }
 
 export function DashboardView({ 
   members, 
   activityLogs, 
+  ownerName = 'Admin',
   onNavigate, 
   onSelectMember,
   onRenewClick,
   onStatClick,
-  onSearchClick
+  onSearchClick,
+  onOpenOnboarding
 }: DashboardViewProps) {
   
   // Statistics Calculations
@@ -93,21 +97,23 @@ export function DashboardView({
       {/* 1. Welcome Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-[#1F2937] tracking-tight">Welcome back, Admin 👋</h1>
+          <h1 className="text-2xl font-bold text-[#1F2937] tracking-tight">Welcome back, {ownerName} 👋</h1>
           <p className="text-sm text-[#6B7280]">
             You have {expiringSoon.length} memberships expiring in the next 7 days.
           </p>
         </div>
         
-        {/* Search Icon Trigger Button */}
-        <button
-          onClick={onSearchClick}
-          id="dashboard-search-trigger-btn"
-          className="flex items-center justify-center w-10 h-10 bg-white hover:bg-gray-50 border border-[#ECEEF3] rounded-2xl shadow-xs text-[#6B7280] hover:text-brand-primary active:scale-95 transition-all cursor-pointer"
-          title="Search Members (Ctrl+K)"
-        >
-          <Search className="w-5 h-5" />
-        </button>
+        {/* Header Action Buttons */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onSearchClick}
+            id="dashboard-search-trigger-btn"
+            className="flex items-center justify-center w-10 h-10 bg-white hover:bg-gray-50 border border-[#ECEEF3] rounded-2xl shadow-xs text-[#6B7280] hover:text-brand-primary active:scale-95 transition-all cursor-pointer"
+            title="Search Members (Ctrl+K)"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* 2. Statistics Grid (Geometric Balance Style - exactly like reference images) */}
@@ -127,17 +133,22 @@ export function DashboardView({
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: idx * 0.05 }}
-              whileHover={{ y: -3, boxShadow: '0 12px 20px -8px rgba(0, 0, 0, 0.04)', borderColor: '#6C63FF' }}
+              whileHover={{ 
+                y: -5, 
+                scale: 1.02,
+                boxShadow: '0 12px 24px -8px rgba(108, 99, 255, 0.18), 0 4px 12px -2px rgba(0, 0, 0, 0.04)'
+              }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => onStatClick?.(stat.id)}
               role="button"
-              className="bg-white p-6 rounded-[20px] border border-[#ECEEF3] shadow-xs flex flex-col justify-between transition-all duration-300 relative group cursor-pointer"
+              className="bg-white p-6 rounded-[20px] border border-[#ECEEF3] hover:border-[#6C63FF]/50 shadow-xs flex flex-col justify-between transform-gpu cursor-pointer group"
             >
               <div className="space-y-4">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-full ${stat.color}`}>
+                <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-110 ${stat.color}`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-3xl font-black text-[#1F2937] tracking-tight">{stat.count}</p>
+                  <p className="text-3xl font-black text-[#1F2937] tracking-tight group-hover:text-brand-primary transition-colors duration-200">{stat.count}</p>
                   <p className="mt-1 text-xs font-semibold text-[#8C94A0] tracking-wide">{stat.label}</p>
                 </div>
               </div>
@@ -146,41 +157,7 @@ export function DashboardView({
         })}
       </div>
 
-      {/* 3. Quick Action Cards (Apple-Stripe hybrid visual style) */}
-      <div className="space-y-4">
-        <h3 className="text-xs font-bold text-[#1F2937] uppercase tracking-wider">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { id: 'qa-add', title: 'Add Member', desc: 'Register a fresh membership', icon: Plus, action: () => onNavigate('add-member') },
-            { id: 'qa-renew', title: 'Renew Plans', desc: 'Extend status for a member', icon: RefreshCw, action: () => onNavigate('reminders') },
-            { id: 'qa-expiring', title: 'Reminders', desc: 'Identify expiries & contact', icon: BellRing, action: () => onNavigate('reminders') },
-            { id: 'qa-plans', title: 'Plans Config', desc: 'Edit pricing and inclusions', icon: CreditCard, action: () => onNavigate('plans') },
-          ].map((act) => {
-            const Icon = act.icon;
-            return (
-              <button
-                key={act.id}
-                id={act.id}
-                onClick={act.action}
-                className="bg-white p-5 rounded-[20px] border border-[#ECEEF3] hover:border-[#6C63FF]/30 shadow-xs text-left cursor-pointer group hover:shadow-sm hover:bg-[#6C63FF]/5 transition-all duration-300 flex items-start justify-between"
-              >
-                <div>
-                  <h4 className="font-bold text-[#1F2937] text-sm group-hover:text-[#6C63FF] transition-colors flex items-center gap-1">
-                    {act.title}
-                    <ArrowUpRight className="w-3.5 h-3.5 text-gray-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </h4>
-                  <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">{act.desc}</p>
-                </div>
-                <div className="p-2.5 rounded-xl bg-gray-50 group-hover:bg-[#6C63FF]/10 group-hover:text-[#6C63FF] text-gray-400 transition-colors">
-                  <Icon className="w-4 h-4 stroke-[2.5]" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+
 
       {/* 4. Dashboard Core Bento-Grid Layout (Bespoke Geometric Balancing) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -210,15 +187,19 @@ export function DashboardView({
                   <div 
                     key={member.id}
                     id={`expiring-row-${member.id}`}
-                    className="p-5 flex items-center justify-between text-sm hover:bg-gray-50/40 transition-colors"
+                    className="p-5 flex items-center justify-between text-sm hover:bg-indigo-50/20 hover:scale-[1.008] hover:-translate-y-0.5 hover:shadow-2xs transition-all duration-200 transform-gpu cursor-pointer group"
+                    onClick={() => onSelectMember(member.id)}
                   >
                     <div className="flex items-center gap-4">
                       <Avatar photoUrl={member.profilePhoto} gender={member.gender} name={member.name} size="md" />
                       <div>
                         <button 
                           id={`expiring-member-link-${member.id}`}
-                          onClick={() => onSelectMember(member.id)}
-                          className="font-bold text-[#1F2937] hover:text-[#6C63FF] hover:underline text-left"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectMember(member.id);
+                          }}
+                          className="font-bold text-[#1F2937] group-hover:text-[#6C63FF] hover:underline text-left transition-colors duration-200"
                         >
                           {member.name}
                         </button>
@@ -238,8 +219,11 @@ export function DashboardView({
                         </span>
                         <button
                           id={`renew-expiring-row-btn-${member.id}`}
-                          onClick={() => onRenewClick(member)}
-                          className="text-xs font-bold text-[#6C63FF] hover:text-white bg-[#6C63FF]/10 hover:bg-[#6C63FF] px-3.5 py-2 rounded-xl transition-all active:scale-95 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRenewClick(member);
+                          }}
+                          className="text-xs font-bold text-[#6C63FF] hover:text-white bg-[#6C63FF]/10 hover:bg-[#6C63FF] px-3.5 py-2 rounded-xl transition-all active:scale-95 cursor-pointer shadow-2xs"
                         >
                           Renew
                         </button>
@@ -298,12 +282,12 @@ export function DashboardView({
                         <tr 
                           key={member.id} 
                           id={`recent-member-row-${member.id}`}
-                          className="text-sm hover:bg-gray-50/40 transition-colors cursor-pointer"
+                          className="text-sm hover:bg-indigo-50/20 hover:scale-[1.005] transition-all duration-200 transform-gpu cursor-pointer group"
                           onClick={() => onSelectMember(member.id)}
                         >
                           <td className="px-6 py-4.5 flex items-center gap-3">
                             <Avatar photoUrl={member.profilePhoto} gender={member.gender} name={member.name} size="sm" />
-                            <span className="font-bold text-[#1F2937]">{member.name}</span>
+                            <span className="font-bold text-[#1F2937] group-hover:text-[#6C63FF] transition-colors duration-200">{member.name}</span>
                           </td>
                           <td className="px-6 py-4.5 text-[#6B7280] font-mono text-xs">{member.phone}</td>
                           <td className="px-6 py-4.5 text-[#1F2937] font-semibold">{member.duration}</td>
