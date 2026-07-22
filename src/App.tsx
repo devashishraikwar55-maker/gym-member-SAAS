@@ -103,10 +103,7 @@ export default function App() {
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
   const [memberToRenew, setMemberToRenew] = useState<Member | null>(null);
   const [isRenewOpen, setIsRenewOpen] = useState<boolean>(false);
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() => {
-    const onboarded = localStorage.getItem('gym_reminders_onboarded_v3');
-    return onboarded !== 'true';
-  });
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(true);
 
   const handleOnboardingComplete = (ownerName: string, gymName: string) => {
     const updatedSettings = {
@@ -116,7 +113,6 @@ export default function App() {
     };
     setSettings(updatedSettings);
     localStorage.setItem('gym_reminders_settings', JSON.stringify(updatedSettings));
-    localStorage.setItem('gym_reminders_onboarded_v3', 'true');
     setIsOnboardingOpen(false);
     addToast(`Welcome, ${ownerName}! Setup complete for ${gymName}.`, 'success');
   };
@@ -647,6 +643,7 @@ export default function App() {
         initialOwnerName={settings.ownerName}
         initialGymName={settings.gymName}
         onComplete={handleOnboardingComplete}
+        onClose={() => setIsOnboardingOpen(false)}
       />
 
       {/* Live Toast Toast notifications container */}

@@ -418,13 +418,13 @@ export const INITIAL_ACTIVITY_LOGS: ActivityLog[] = [
 ];
 
 export const DEFAULT_SETTINGS: SystemSettings = {
-  gymName: 'Apex Fitness Club',
+  gymName: 'GYM-member',
   ownerName: 'Devashish Raikwar',
   currency: '₹',
   reminderTemplates: {
-    expiringToday: 'Hi {name}, your Apex Fitness membership expires TODAY! To avoid any interruption, please renew now. Feel free to reply or call us for help.',
-    expiring3Days: 'Hi {name}, your Apex Fitness membership will expire in 3 days on {date}. Renew today to lock in your current rate!',
-    expiring7Days: 'Hi {name}, hope you are crushing your goals! Just a friendly reminder that your membership expires in 7 days on {date}. Keep moving!',
+    expiringToday: 'Hi {name}, your GYM-member membership expires TODAY! To avoid any interruption, please renew now. Feel free to reply or call us for help.',
+    expiring3Days: 'Hi {name}, your GYM-member membership will expire in 3 days on {date}. Renew today to lock in your current rate!',
+    expiring7Days: 'Hi {name}, hope you are crushing your goals! Just a friendly reminder that your GYM-member membership expires in 7 days on {date}. Keep moving!',
   }
 };
 

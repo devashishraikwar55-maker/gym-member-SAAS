@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, Dumbbell, ArrowRight, CheckCircle2, ChevronLeft, Sparkles } from 'lucide-react';
+import { User, Dumbbell, ArrowRight, CheckCircle2, ChevronLeft, X } from 'lucide-react';
 
 interface OnboardingModalProps {
   isOpen: boolean;
   initialOwnerName?: string;
   initialGymName?: string;
   onComplete: (ownerName: string, gymName: string) => void;
+  onClose?: () => void;
 }
 
 export function OnboardingModal({
@@ -14,6 +15,7 @@ export function OnboardingModal({
   initialOwnerName = '',
   initialGymName = '',
   onComplete,
+  onClose,
 }: OnboardingModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [ownerName, setOwnerName] = useState(initialOwnerName);
@@ -46,55 +48,57 @@ export function OnboardingModal({
           transition={{ type: 'spring', damping: 26, stiffness: 320 }}
           className="bg-[#00B5B0] text-[#12171A] w-full max-w-sm sm:max-w-md rounded-[36px] shadow-2xl border border-teal-400/30 overflow-hidden relative flex flex-col my-auto"
         >
-          {/* Top Graphic Banner - Stepping Athletic Feet Illustration */}
-          <div className="relative w-full h-52 sm:h-60 bg-[#00B5B0] overflow-hidden flex items-center justify-center pt-2">
-            {/* Background Geometric Shadow Steps */}
-            <svg className="absolute inset-0 w-full h-full text-[#009692]" fill="currentColor" viewBox="0 0 400 240">
-              <path d="M 180,0 L 220,0 L 220,60 L 260,60 L 260,120 L 300,120 L 300,180 L 340,180 L 340,240 L 180,240 Z" opacity="0.45" />
-              <path d="M 220,0 L 270,0 L 270,80 L 320,80 L 320,160 L 370,160 L 370,240 L 220,240 Z" opacity="0.3" />
-            </svg>
+          {/* Full Cover Zoomed Background Image */}
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+            <img 
+              src="https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/onbording%20bg.png" 
+              alt="Onboarding Background"
+              className="w-full h-full object-cover object-center scale-160 sm:scale-145 origin-center transition-transform duration-700"
+              referrerPolicy="no-referrer"
+            />
+            {/* Gradient & Backdrop Overlay to make form fields and typography ultra crisp */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#00B5B0]/50 to-[#00B5B0]/95" />
+          </div>
 
-            {/* Main Vector Art - Legs with striped crew socks & running sneakers */}
-            <svg className="w-56 h-56 sm:w-64 sm:h-64 relative z-10 drop-shadow-md" viewBox="0 0 200 200" fill="none">
-              {/* Back Leg Shadow */}
-              <path d="M 115,10 L 132,10 L 118,85 L 102,85 Z" fill="#00726F" />
-              
-              {/* Right Leg (Stepping Higher) */}
-              <path d="M 110,10 C 110,10 118,50 120,70 C 122,90 108,120 105,130 L 90,128 C 93,115 106,88 103,70 C 100,50 94,10 94,10 Z" fill="#1C2126" />
-              {/* Right Sock */}
-              <path d="M 105,130 C 103,138 98,150 92,158 L 80,154 C 85,145 90,135 90,128 Z" fill="#FFFFFF" />
-              <path d="M 102,135 L 88,131 M 100,140 L 86,136 M 98,145 L 84,141" stroke="#1C2126" strokeWidth="2" strokeLinecap="round" />
-              {/* Right Sneaker */}
-              <path d="M 92,158 C 90,162 82,172 68,172 C 60,172 58,168 62,160 C 66,152 75,150 80,154 Z" fill="#FFFFFF" />
-              <path d="M 68,172 C 60,172 58,168 62,160" stroke="#00B5B0" strokeWidth="3" strokeLinecap="round" />
-              <path d="M 64,172 L 90,163" stroke="#1C2126" strokeWidth="3.5" strokeLinecap="round" />
+          {/* Header Controls (Close & Step Pill) */}
+          <div className="relative z-10 w-full p-4 flex items-center justify-between">
+            {onClose ? (
+              <button
+                type="button"
+                id="onboarding-close-btn"
+                onClick={onClose}
+                className="p-2 rounded-full bg-black/25 hover:bg-black/40 text-white transition-colors cursor-pointer backdrop-blur-md"
+                title="Skip for now"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            ) : <div />}
 
-              {/* Left Leg (Lower Step) */}
-              <path d="M 65,10 C 65,10 70,45 68,65 C 66,85 52,105 48,115 L 35,110 C 39,100 52,80 54,65 C 56,45 50,10 50,10 Z" fill="#1C2126" />
-              {/* Left Sock */}
-              <path d="M 48,115 C 46,122 42,132 38,138 L 26,132 C 30,125 34,116 35,110 Z" fill="#FFFFFF" />
-              <path d="M 46,120 L 33,114 M 44,125 L 31,119 M 42,130 L 29,124" stroke="#1C2126" strokeWidth="2" strokeLinecap="round" />
-              {/* Left Sneaker */}
-              <path d="M 38,138 C 36,143 28,150 18,148 C 12,147 12,141 16,135 C 20,128 27,128 26,132 Z" fill="#FFFFFF" />
-              <path d="M 18,148 L 36,140" stroke="#1C2126" strokeWidth="3.5" strokeLinecap="round" />
-              <path d="M 18,148 C 12,147 12,141 16,135" stroke="#00B5B0" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-
-            {/* Subtle Step Dots */}
-            <div className="absolute top-4 right-5 flex items-center gap-1.5 bg-black/10 backdrop-blur-xs px-3 py-1 rounded-full text-[11px] font-bold text-slate-900 tracking-wider uppercase">
-              <Sparkles className="w-3.5 h-3.5 text-[#12171A]" />
-              <span>Step {step} / 2</span>
+            <div className="flex items-center gap-2 bg-black/25 backdrop-blur-md px-3 py-1.5 rounded-full">
+              <div 
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  step === 1 ? 'bg-white scale-110 shadow-xs' : 'bg-white/40'
+                }`} 
+              />
+              <div 
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  step === 2 ? 'bg-white scale-110 shadow-xs' : 'bg-white/40'
+                }`} 
+              />
             </div>
           </div>
 
+          {/* Visual Showcase Gap to highlight the zoomed graphic in middle */}
+          <div className="relative z-10 w-full h-28 sm:h-36 pointer-events-none" />
+
           {/* Main Content & Form Area */}
-          <div className="px-6 pb-7 pt-1 flex flex-col items-center text-center space-y-5">
+          <div className="relative z-10 px-6 pb-7 pt-1 flex flex-col items-center text-center space-y-5">
             {/* Logo Emblem */}
             <div className="flex items-center justify-center gap-1.5 text-[#12171A]">
-              <div className="p-2 bg-[#12171A] text-[#00B5B0] rounded-xl shadow-xs">
+              <div className="p-2 bg-[#12171A] text-[#00B5B0] rounded-xl shadow-md">
                 <Dumbbell className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <span className="font-extrabold tracking-tight text-sm uppercase">Apex Gym</span>
+              <span className="font-extrabold tracking-tight text-sm uppercase drop-shadow-xs">GYM-member</span>
             </div>
 
             {/* Header Text */}
