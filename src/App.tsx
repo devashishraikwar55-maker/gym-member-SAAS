@@ -35,7 +35,8 @@ export default function App() {
   // --- Auth State ---
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     const saved = localStorage.getItem('gym_reminders_logged_in');
-    return saved === 'true';
+    if (saved === 'false') return false;
+    return true;
   });
 
   // --- Core Domain States ---
