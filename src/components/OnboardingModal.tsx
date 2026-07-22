@@ -104,12 +104,16 @@ export function OnboardingModal({
             {/* Header Text */}
             <div className="space-y-1.5 max-w-xs">
               <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[#12171A] leading-snug">
-                {step === 1 ? 'Take the next step' : 'Complete your gym profile'}
+                {step === 1 ? 'Take the next step to organize' : 'Complete your gym profile'}
               </h2>
-              <p className="text-xs sm:text-sm font-medium text-[#12171A]/80 leading-relaxed">
-                {step === 1 
-                  ? 'Toward a organized, effortless, and member-focused gym management experience.' 
-                  : 'Specify your gym or fitness center title to finish setting up.'}
+              <p className="text-xs sm:text-sm font-medium text-[#12171A]/90 leading-relaxed">
+                {step === 1 ? (
+                  <>
+                    <span className="font-extrabold text-[#12171A] text-sm sm:text-base">"kal se patka aunga"</span> bolne wale log.
+                  </>
+                ) : (
+                  'Specify your gym or fitness center title to finish setting up.'
+                )}
               </p>
             </div>
 
