@@ -12,10 +12,12 @@ import {
   Phone,
   UserCheck,
   AlertTriangle,
-  UserPlus
+  UserPlus,
+  MessageCircle
 } from 'lucide-react';
 import { Member, formatDate } from '../types';
 import { Avatar } from './Avatar';
+import { getWhatsAppRenewUrl } from '../utils/whatsapp';
 
 interface MembersViewProps {
   members: Member[];
@@ -242,7 +244,20 @@ export function MembersView({
                       </td>
 
                       <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                          {/* Send WhatsApp Renewal Button */}
+                          <a
+                            id={`member-whatsapp-send-${member.id}`}
+                            href={getWhatsAppRenewUrl(member.phone, member.name, 'GYM-member', member.expiryDate, member.duration)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 border border-emerald-200/80 transition-all shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
+                            title="Send WhatsApp message to renew plan"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
+                            <span>Send</span>
+                          </a>
+
                           <button
                             id={`quick-view-btn-${member.id}`}
                             onClick={() => onSelectMember(member.id)}
@@ -268,21 +283,43 @@ export function MembersView({
             </table>
           </div>
         ) : (
-          <div className="p-12 text-center max-w-md mx-auto">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-              <Search className="w-6 h-6" />
-            </div>
-            <p className="text-base font-bold text-brand-text-primary">No members found</p>
-            <p className="text-xs text-brand-text-secondary mt-1">
-              {searchQuery ? `We couldn't find any member matching "${searchQuery}".` : 'No members fit the current status filter.'}
-            </p>
-            <button
-              id="empty-members-reset-btn"
-              onClick={() => { setSearchQuery(''); setStatusFilter('All'); }}
-              className="mt-4 bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer"
-            >
-              Reset Filters
-            </button>
+          <div className="p-12 text-center max-w-md mx-auto flex flex-col items-center">
+            {activeAndExpiringMembers.length === 0 && !searchQuery ? (
+              <>
+                <div className="w-16 h-16 bg-gradient-to-tr from-brand-primary to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-md shadow-indigo-500/25">
+                  <UserPlus className="w-8 h-8 stroke-[2.2]" />
+                </div>
+                <p className="text-lg font-bold text-brand-text-primary">No members registered yet</p>
+                <p className="text-xs text-brand-text-secondary mt-1 max-w-xs leading-relaxed">
+                  Start building your gym directory by registering your first member.
+                </p>
+                <button
+                  id="members-add-first-member-btn"
+                  onClick={() => onNavigate('add-member')}
+                  className="mt-5 inline-flex items-center gap-2 bg-brand-primary hover:bg-brand-primary-hover text-white px-6 py-3 rounded-xl text-sm font-bold shadow-md cursor-pointer transition-all active:scale-95"
+                >
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <span>Add First Member</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                  <Search className="w-6 h-6" />
+                </div>
+                <p className="text-base font-bold text-brand-text-primary">No members found</p>
+                <p className="text-xs text-brand-text-secondary mt-1">
+                  {searchQuery ? `We couldn't find any member matching "${searchQuery}".` : 'No members fit the current status filter.'}
+                </p>
+                <button
+                  id="empty-members-reset-btn"
+                  onClick={() => { setSearchQuery(''); setStatusFilter('All'); }}
+                  className="mt-4 bg-brand-primary hover:bg-brand-primary-hover text-white px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+                >
+                  Reset Filters
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ChevronLeft, Dumbbell } from 'lucide-react';
+import { ChevronLeft, Dumbbell, Loader2 } from 'lucide-react';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { 
   INITIAL_MEMBERS, 
   INITIAL_PLANS, 
@@ -11,9 +12,21 @@ import {
   ActivityLog, 
   SystemSettings, 
   CURRENT_DATE_STR, 
-  getDaysDiff, 
-  formatDate 
+  getDaysDiff 
 } from './types';
+import { 
+  auth,
+  logoutUser,
+  initializeUserGymData,
+  subscribeToSettings,
+  subscribeToMembers,
+  subscribeToPlans,
+  subscribeToLogs,
+  saveMemberToFirestore,
+  deleteMemberFromFirestore,
+  saveLogToFirestore,
+  saveSettingsToFirestore
+} from './lib/firebase';
 
 // Component Imports
 import { Notifications, Toast } from './components/Notifications';
@@ -30,67 +43,24 @@ import { MemberForm } from './components/MemberForm';
 import { MemberDetailsModal } from './components/MemberDetailsModal';
 import { RenewModal } from './components/RenewModal';
 import { OnboardingModal } from './components/OnboardingModal';
+import { OnboardingSlides } from './components/OnboardingSlides';
 
 export default function App() {
-  // --- Auth State ---
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    const saved = localStorage.getItem('gym_reminders_logged_in');
-    if (saved === 'false') return false;
-    return true;
+  // --- Auth & User State ---
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
+  const [isSkippedAuth, setIsSkippedAuth] = useState<boolean>(() => {
+    return localStorage.getItem('gym_reminders_guest_mode') === 'true';
   });
 
-  // --- Core Domain States ---
-  const [members, setMembers] = useState<Member[]>(() => {
-    const isUpgraded = localStorage.getItem('gym_reminders_v7_phone_reset');
-    if (!isUpgraded) {
-      localStorage.setItem('gym_reminders_v7_phone_reset', 'true');
-      localStorage.setItem('gym_reminders_members', JSON.stringify(INITIAL_MEMBERS));
-      localStorage.setItem('gym_reminders_plans', JSON.stringify(INITIAL_PLANS));
-      return INITIAL_MEMBERS;
-    }
-    const saved = localStorage.getItem('gym_reminders_members');
-    if (saved) {
-      try {
-        const parsed: Member[] = JSON.parse(saved);
-        return parsed.map((m: Member) => {
-          if (!m.profilePhoto || m.profilePhoto.includes('dicebear.com') || m.profilePhoto.includes('unsplash.com')) {
-            const defaultPhoto = m.gender === 'Female' 
-              ? 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/female.png'
-              : m.gender === 'Couple'
-                ? 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/couple.png'
-                : 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png';
-            return { ...m, profilePhoto: defaultPhoto };
-          }
-          return m;
-        });
-      } catch (e) {
-        return INITIAL_MEMBERS;
-      }
-    }
-    return INITIAL_MEMBERS;
-  });
+  // --- Reload Onboarding State (shown whenever app is reloaded) ---
+  const [showReloadOnboarding, setShowReloadOnboarding] = useState<boolean>(true);
 
-  const [plans] = useState<MembershipPlan[]>(() => {
-    const isUpgraded = localStorage.getItem('gym_reminders_v6_upgrade_gender_avatars');
-    if (!isUpgraded) {
-      return INITIAL_PLANS;
-    }
-    const saved = localStorage.getItem('gym_reminders_plans');
-    if (saved) return JSON.parse(saved);
-    return INITIAL_PLANS;
-  });
-
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => {
-    const saved = localStorage.getItem('gym_reminders_logs');
-    if (saved) return JSON.parse(saved);
-    return INITIAL_ACTIVITY_LOGS;
-  });
-
-  const [settings, setSettings] = useState<SystemSettings>(() => {
-    const saved = localStorage.getItem('gym_reminders_settings');
-    if (saved) return JSON.parse(saved);
-    return DEFAULT_SETTINGS;
-  });
+  // --- Core Domain States (backed by Firestore when logged in, or sample random members when skipped) ---
+  const [members, setMembers] = useState<Member[]>(INITIAL_MEMBERS);
+  const [plans, setPlans] = useState<MembershipPlan[]>(INITIAL_PLANS);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(INITIAL_ACTIVITY_LOGS);
+  const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
 
   // --- UI Layout & Routing ---
   const [currentView, setCurrentView] = useState<string>('dashboard');
@@ -104,39 +74,72 @@ export default function App() {
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
   const [memberToRenew, setMemberToRenew] = useState<Member | null>(null);
   const [isRenewOpen, setIsRenewOpen] = useState<boolean>(false);
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(true);
-
-  const handleOnboardingComplete = (ownerName: string, gymName: string) => {
-    const updatedSettings = {
-      ...settings,
-      ownerName,
-      gymName,
-    };
-    setSettings(updatedSettings);
-    localStorage.setItem('gym_reminders_settings', JSON.stringify(updatedSettings));
-    setIsOnboardingOpen(false);
-    addToast(`Welcome, ${ownerName}! Setup complete for ${gymName}.`, 'success');
-  };
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
 
   // --- Toast notifications state ---
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // --- Persist state updates to localStorage ---
-  useEffect(() => {
-    localStorage.setItem('gym_reminders_logged_in', String(isLoggedIn));
-  }, [isLoggedIn]);
+  // Toast Notification triggers
+  const addToast = useCallback((message: string, type: 'success' | 'warning' | 'danger') => {
+    const id = `toast-${Date.now()}`;
+    setToasts(prev => [...prev, { id, message, type }]);
+    
+    // Auto dismiss after 3.5 seconds
+    setTimeout(() => {
+      removeToast(id);
+    }, 3500);
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('gym_reminders_members', JSON.stringify(members));
-  }, [members]);
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
 
+  // --- Firebase Auth & Realtime Firestore Synchronization ---
   useEffect(() => {
-    localStorage.setItem('gym_reminders_logs', JSON.stringify(activityLogs));
-  }, [activityLogs]);
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
+      setIsAuthChecking(false);
 
+      if (user) {
+        // Initialize user database documents if first-time user
+        await initializeUserGymData(
+          user.uid, 
+          user.displayName || settings.ownerName || 'Gym Owner', 
+          settings.gymName || 'GYM-member'
+        );
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Sync real-time Firestore data when authenticated
   useEffect(() => {
-    localStorage.setItem('gym_reminders_settings', JSON.stringify(settings));
-  }, [settings]);
+    if (!currentUser) return;
+
+    const unsubSettings = subscribeToSettings(currentUser.uid, (syncedSettings) => {
+      setSettings(syncedSettings);
+    });
+
+    const unsubMembers = subscribeToMembers(currentUser.uid, (syncedMembers) => {
+      setMembers(syncedMembers);
+    });
+
+    const unsubPlans = subscribeToPlans(currentUser.uid, (syncedPlans) => {
+      setPlans(syncedPlans);
+    });
+
+    const unsubLogs = subscribeToLogs(currentUser.uid, (syncedLogs) => {
+      setActivityLogs(syncedLogs);
+    });
+
+    return () => {
+      unsubSettings();
+      unsubMembers();
+      unsubPlans();
+      unsubLogs();
+    };
+  }, [currentUser]);
 
   // Handle Ctrl+K shortcut to toggle command palette
   useEffect(() => {
@@ -150,22 +153,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Toast Notification triggers
-  const addToast = useCallback((message: string, type: 'success' | 'warning' | 'danger') => {
-    const id = `toast-${Date.now()}`;
-    setToasts(prev => [...prev, { id, message, type }]);
-    
-    // Auto dismiss after 3 seconds
-    setTimeout(() => {
-      removeToast(id);
-    }, 3500);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
-
-  // Helper to re-evaluate and calculate exact status for a member based on target date
+  // Helper to calculate exact status for a member based on target date
   const getCalculatedStatus = (expiryDate: string, currentStatus: 'Active' | 'Expiring' | 'Expired' | 'Cancelled'): 'Active' | 'Expiring' | 'Expired' | 'Cancelled' => {
     if (currentStatus === 'Cancelled') return 'Cancelled';
     const diff = getDaysDiff(CURRENT_DATE_STR, expiryDate);
@@ -174,33 +162,43 @@ export default function App() {
     return 'Active';
   };
 
-  // Automated effect to ensure statuses stay in sync with the simulated timeline date (July 4th, 2026)
-  useEffect(() => {
-    let changed = false;
-    const updatedMembers = members.map(m => {
-      const calculated = getCalculatedStatus(m.expiryDate, m.status);
-      if (calculated !== m.status) {
-        changed = true;
-        return { ...m, status: calculated };
+  const handleOnboardingComplete = async (ownerName: string, gymName: string) => {
+    const updatedSettings = {
+      ...settings,
+      ownerName,
+      gymName,
+    };
+    setSettings(updatedSettings);
+    if (currentUser) {
+      try {
+        await saveSettingsToFirestore(currentUser.uid, updatedSettings);
+      } catch (err) {
+        console.error('Error saving onboarding settings:', err);
       }
-      return m;
-    });
-
-    if (changed) {
-      setMembers(updatedMembers);
     }
-  }, [members]);
-
-  // Auth actions
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-    addToast('Logged in successfully. Welcome to GymReminders SaaS dashboard!', 'success');
+    setIsOnboardingOpen(false);
+    addToast(`Welcome, ${ownerName}! Setup complete for ${gymName}.`, 'success');
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  // Auth actions
+  const handleSkipAuth = () => {
+    setIsSkippedAuth(true);
+    localStorage.setItem('gym_reminders_guest_mode', 'true');
+    setMembers(INITIAL_MEMBERS);
+    setActivityLogs(INITIAL_ACTIVITY_LOGS);
+    addToast('Exploring dashboard in Guest Mode. You can sign in anytime.', 'success');
+  };
+
+  const handleLogout = async () => {
+    localStorage.removeItem('gym_reminders_guest_mode');
+    setIsSkippedAuth(false);
+    await logoutUser();
+    setCurrentUser(null);
+    setMembers(INITIAL_MEMBERS);
+    setActivityLogs(INITIAL_ACTIVITY_LOGS);
+    setSettings(DEFAULT_SETTINGS);
     setCurrentView('dashboard');
-    addToast('Signed out of the management panel.', 'warning');
+    addToast('Signed out of GYM-member.', 'warning');
   };
 
   // Global search triggers
@@ -209,20 +207,8 @@ export default function App() {
     setIsDetailsOpen(true);
   };
 
-  // Reset system database trigger
-  const handleResetData = () => {
-    localStorage.removeItem('gym_reminders_members');
-    localStorage.removeItem('gym_reminders_logs');
-    localStorage.removeItem('gym_reminders_settings');
-    setMembers(INITIAL_MEMBERS);
-    setActivityLogs(INITIAL_ACTIVITY_LOGS);
-    setSettings(DEFAULT_SETTINGS);
-    setCurrentView('dashboard');
-    addToast('System database successfully reverted to factory seed records.', 'success');
-  };
-
   // Add new member
-  const handleAddMemberSubmit = (formData: Omit<Member, 'id' | 'status' | 'history'>) => {
+  const handleAddMemberSubmit = async (formData: Omit<Member, 'id' | 'status' | 'history'>) => {
     const newId = `mem-${Date.now()}`;
     const calculatedStatus = getCalculatedStatus(formData.expiryDate, 'Active');
 
@@ -251,20 +237,30 @@ export default function App() {
       timestamp: new Date().toISOString()
     };
 
+    // Optimistic UI update
     setMembers(prev => [newMember, ...prev]);
     setActivityLogs(prev => [newLog, ...prev]);
     setCurrentView('members');
-    addToast(`Successfully registered ${formData.name} as a new member!`, 'success');
+    addToast(`Successfully registered ${formData.name} to cloud database!`, 'success');
+
+    // Firestore cloud save
+    if (currentUser) {
+      try {
+        await saveMemberToFirestore(currentUser.uid, newMember);
+        await saveLogToFirestore(currentUser.uid, newLog);
+      } catch (err) {
+        console.error('Firestore save member error:', err);
+      }
+    }
   };
 
   // Edit existing member
-  const handleEditMemberSubmit = (formData: Omit<Member, 'id' | 'status' | 'history'>) => {
+  const handleEditMemberSubmit = async (formData: Omit<Member, 'id' | 'status' | 'history'>) => {
     if (!selectedMemberId) return;
 
     const existingMember = members.find(m => m.id === selectedMemberId);
     if (!existingMember) return;
 
-    // Recalculate status (preserve Cancelled unless they chose something else, but if they edit, we update based on edited dates)
     const calculatedStatus = getCalculatedStatus(formData.expiryDate, existingMember.status);
 
     const updatedMember: Member = {
@@ -286,16 +282,24 @@ export default function App() {
     setActivityLogs(prev => [newLog, ...prev]);
     setCurrentView('members');
     setSelectedMemberId(null);
-    addToast(`Record details for ${formData.name} successfully updated.`, 'success');
+    addToast(`Record details for ${formData.name} synced to database.`, 'success');
+
+    if (currentUser) {
+      try {
+        await saveMemberToFirestore(currentUser.uid, updatedMember);
+        await saveLogToFirestore(currentUser.uid, newLog);
+      } catch (err) {
+        console.error('Firestore update member error:', err);
+      }
+    }
   };
 
   // Renew membership
-  const handleRenewMember = (memberId: string, planId: string, customStartDate: string, paymentStatus: 'Paid' | 'Unpaid' | 'Pending') => {
+  const handleRenewMember = async (memberId: string, planId: string, customStartDate: string, paymentStatus: 'Paid' | 'Unpaid' | 'Pending') => {
     const member = members.find(m => m.id === memberId);
     const plan = plans.find(p => p.id === planId);
     if (!member || !plan) return;
 
-    // Calculate expiry date relative to customStartDate
     const start = new Date(customStartDate);
     start.setMonth(start.getMonth() + plan.durationMonths);
     const customExpiryDate = start.toISOString().split('T')[0];
@@ -310,7 +314,6 @@ export default function App() {
       renewedAt: CURRENT_DATE_STR,
     };
 
-    // Close any previous history entries
     const updatedHistory = member.history.map(hist => {
       if (hist.status === 'Active') {
         return { ...hist, status: 'Completed' as const };
@@ -326,7 +329,7 @@ export default function App() {
       joiningDate: customStartDate,
       expiryDate: customExpiryDate,
       duration: plan.duration,
-      status: 'Active', // Renewing restores status to Active
+      status: 'Active',
       history: [...updatedHistory, newHistoryRecord]
     };
 
@@ -342,10 +345,19 @@ export default function App() {
     setMembers(prev => prev.map(m => m.id === memberId ? updatedMember : m));
     setActivityLogs(prev => [newLog, ...prev]);
     addToast(`Successfully renewed membership for ${member.name}!`, 'success');
+
+    if (currentUser) {
+      try {
+        await saveMemberToFirestore(currentUser.uid, updatedMember);
+        await saveLogToFirestore(currentUser.uid, newLog);
+      } catch (err) {
+        console.error('Firestore renew member error:', err);
+      }
+    }
   };
 
   // Cancel membership
-  const handleCancelMembership = (memberId: string) => {
+  const handleCancelMembership = async (memberId: string) => {
     const member = members.find(m => m.id === memberId);
     if (!member) return;
 
@@ -359,7 +371,7 @@ export default function App() {
     const updatedMember: Member = {
       ...member,
       status: 'Cancelled',
-      paymentStatus: 'Paid', // Clear unpaid issues on cancel
+      paymentStatus: 'Paid',
       history: updatedHistory
     };
 
@@ -375,24 +387,49 @@ export default function App() {
     setMembers(prev => prev.map(m => m.id === memberId ? updatedMember : m));
     setActivityLogs(prev => [newLog, ...prev]);
     addToast(`Membership for ${member.name} has been cancelled. Records preserved in Archive.`, 'warning');
+
+    if (currentUser) {
+      try {
+        await saveMemberToFirestore(currentUser.uid, updatedMember);
+        await saveLogToFirestore(currentUser.uid, newLog);
+      } catch (err) {
+        console.error('Firestore cancel member error:', err);
+      }
+    }
   };
 
   // Delete member completely
-  const handleDeleteMember = (memberId: string) => {
+  const handleDeleteMember = async (memberId: string) => {
     const member = members.find(m => m.id === memberId);
     if (!member) return;
 
     setMembers(prev => prev.filter(m => m.id !== memberId));
     addToast(`Member ${member.name} has been deleted from the database.`, 'danger');
+
+    if (currentUser) {
+      try {
+        await deleteMemberFromFirestore(currentUser.uid, memberId);
+      } catch (err) {
+        console.error('Firestore delete member error:', err);
+      }
+    }
   };
 
   // Save Settings
-  const handleSaveSettings = (updatedSettings: SystemSettings) => {
+  const handleSaveSettings = async (updatedSettings: SystemSettings) => {
     setSettings(updatedSettings);
-    addToast('System settings and reminder templates successfully saved.', 'success');
+    addToast('Gym settings saved and synced to cloud.', 'success');
+
+    if (currentUser) {
+      try {
+        await saveSettingsToFirestore(currentUser.uid, updatedSettings);
+      } catch (err) {
+        console.error('Firestore save settings error:', err);
+      }
+    }
   };
 
-  // --- Conditional Rendering of Sub-Views with Page Transition Containers ---
+  // --- Conditional Sub-Views ---
   const renderCurrentView = () => {
     switch (currentView) {
       case 'dashboard':
@@ -487,8 +524,7 @@ export default function App() {
           <SettingsView 
             settings={settings}
             onSaveSettings={handleSaveSettings}
-            onResetData={handleResetData}
-            onReRunOnboarding={() => setIsOnboardingOpen(true)}
+            onReRunOnboarding={() => setShowReloadOnboarding(true)}
           />
         );
       default:
@@ -505,7 +541,7 @@ export default function App() {
       case 'reminders': return 'Expiring Membership';
       case 'cancelled': return 'Cancelled Members';
       case 'plans': return 'Membership Plans';
-      case 'settings': return 'System Settings';
+      case 'settings': return 'Settings';
       default: return 'GYM-member';
     }
   };
@@ -525,19 +561,89 @@ export default function App() {
     handleNavigate('members');
   };
 
-  // --- Auth Wall Check ---
-  if (!isLoggedIn) {
+  // --- Initial Auth Loading Screen ---
+  if (isAuthChecking) {
     return (
-      <div id="app-auth-wrapper">
-        <LoginView onLogin={handleLogin} />
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-brand-bg gap-3 text-brand-text-secondary">
+        <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
+        <span className="text-xs font-semibold uppercase tracking-wider">Connecting to GYM-member...</span>
+      </div>
+    );
+  }
+
+  // --- Onboarding Slides: Displayed on app launch & browser reload ---
+  if (showReloadOnboarding) {
+    return (
+      <div 
+        id="app-onboarding-slides-wrapper"
+        className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-brand-bg relative overflow-hidden"
+      >
+        {/* Subtle decorative background shapes */}
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-indigo-200/25 rounded-full blur-[120px] -z-10 animate-pulse duration-[8s]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-purple-200/25 rounded-full blur-[100px] -z-10 animate-pulse duration-[12s]" />
+
+        <OnboardingSlides 
+          currentUser={currentUser}
+          settings={settings}
+          onSaveProfile={async (ownerName, gymName) => {
+            setSettings(prev => ({
+              ...prev,
+              ownerName,
+              gymName,
+            }));
+          }}
+          onLoginSuccess={() => {
+            setShowReloadOnboarding(false);
+            setIsSkippedAuth(false);
+            localStorage.removeItem('gym_reminders_guest_mode');
+            addToast('Welcome to GYM-member!', 'success');
+          }}
+          onComplete={() => setShowReloadOnboarding(false)} 
+          onSkip={() => {
+            setShowReloadOnboarding(false);
+            handleSkipAuth();
+          }} 
+        />
         <Notifications toasts={toasts} removeToast={removeToast} />
       </div>
     );
   }
 
+  // --- Auth Wall: Show real login if not signed in or not skipped ---
+  if (!currentUser && !isSkippedAuth) {
+    return (
+      <div id="app-auth-wrapper">
+        <LoginView 
+          settings={settings}
+          onSaveProfile={async (ownerName, gymName) => {
+            setSettings(prev => ({
+              ...prev,
+              ownerName,
+              gymName,
+            }));
+          }}
+          onLoginSuccess={() => {
+            setIsSkippedAuth(false);
+            localStorage.removeItem('gym_reminders_guest_mode');
+            addToast('Welcome to GYM-member!', 'success');
+          }} 
+          onSkip={handleSkipAuth}
+        />
+        <Notifications toasts={toasts} removeToast={removeToast} />
+      </div>
+    );
+  }
+
+  const userInitials = (settings.ownerName || currentUser.displayName || 'GM')
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <div id="app-workspace-layout" className="min-h-screen bg-brand-bg flex flex-col md:flex-row">
-      {/* Mobile Top Header (Purple Strip exactly as requested) */}
+      {/* Mobile Top Header */}
       <div className="md:hidden bg-[#6C63FF] text-white h-16 px-5 sticky top-0 left-0 right-0 z-40 shadow-sm flex items-center justify-between">
         <div className="flex items-center gap-3">
           {showBackOnMobile ? (
@@ -570,7 +676,7 @@ export default function App() {
         </div>
         
         <div className="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">
-          AD
+          {userInitials}
         </div>
       </div>
 
@@ -580,12 +686,12 @@ export default function App() {
         onNavigate={handleNavigate}
         onLogout={handleLogout}
         gymName={settings.gymName}
-        ownerName={settings.ownerName}
+        ownerName={settings.ownerName || currentUser.displayName || 'Owner'}
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
       />
 
-      {/* 2. Main Content Frame (Adjust margins to fit responsive sidebar layout) */}
+      {/* 2. Main Content Frame */}
       <main 
         id="app-main-viewport"
         className={`flex-1 transition-all duration-300 md:pb-6 ${
@@ -607,8 +713,6 @@ export default function App() {
       </main>
 
       {/* 3. Global Popups & Overlays */}
-      
-      {/* Ctrl+K Search Palette */}
       <CommandPalette 
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
@@ -617,7 +721,6 @@ export default function App() {
         onNavigate={handleNavigate}
       />
 
-      {/* Member Details Popup */}
       <MemberDetailsModal 
         isOpen={isDetailsOpen}
         onClose={() => { setIsDetailsOpen(false); setSelectedMemberId(null); }}
@@ -629,7 +732,6 @@ export default function App() {
         onDeleteClick={handleDeleteMember}
       />
 
-      {/* Quick Renew Popup */}
       <RenewModal 
         isOpen={isRenewOpen}
         onClose={() => { setIsRenewOpen(false); setMemberToRenew(null); }}
@@ -638,16 +740,14 @@ export default function App() {
         onRenew={handleRenewMember}
       />
 
-      {/* User Onboarding Setup Flow */}
       <OnboardingModal
-        isOpen={isOnboardingOpen && isLoggedIn}
-        initialOwnerName={settings.ownerName}
+        isOpen={isOnboardingOpen && !!currentUser}
+        initialOwnerName={settings.ownerName || currentUser.displayName || ''}
         initialGymName={settings.gymName}
         onComplete={handleOnboardingComplete}
         onClose={() => setIsOnboardingOpen(false)}
       />
 
-      {/* Live Toast Toast notifications container */}
       <Notifications toasts={toasts} removeToast={removeToast} />
     </div>
   );

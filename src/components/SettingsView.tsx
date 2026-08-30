@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { motion } from 'motion/react';
-import { Save, Building, User } from 'lucide-react';
+import { Save, Building, User, Sparkles } from 'lucide-react';
 import { SystemSettings } from '../types';
 
 interface SettingsViewProps {
@@ -10,7 +10,7 @@ interface SettingsViewProps {
   onReRunOnboarding?: () => void;
 }
 
-export function SettingsView({ settings, onSaveSettings }: SettingsViewProps) {
+export function SettingsView({ settings, onSaveSettings, onReRunOnboarding }: SettingsViewProps) {
   const [gymName, setGymName] = useState('');
   const [ownerName, setOwnerName] = useState('');
 
@@ -87,6 +87,29 @@ export function SettingsView({ settings, onSaveSettings }: SettingsViewProps) {
             </div>
           </div>
         </div>
+
+        {/* Replay Onboarding Slides Tour */}
+        {onReRunOnboarding && (
+          <div className="bg-gradient-to-r from-indigo-50/60 to-purple-50/60 p-5 rounded-2xl border border-indigo-100/80 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-brand-text-primary">Feature Tour & Onboarding Slides</h4>
+                <p className="text-[11px] text-brand-text-secondary">View the introduction slides anytime to explore all features.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="replay-onboarding-slides-btn"
+              onClick={onReRunOnboarding}
+              className="px-4 py-2 bg-white hover:bg-gray-50 border border-brand-border text-xs font-bold text-brand-primary rounded-xl transition-all shadow-2xs hover:shadow-xs flex-shrink-0 cursor-pointer"
+            >
+              Replay Tour
+            </button>
+          </div>
+        )}
 
         {/* Save Settings CTA */}
         <div className="flex justify-end">

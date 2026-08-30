@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Phone, MapPin, Calendar, CreditCard, Clock, Trash2, Edit, RefreshCw, Slash, FileText, User, HelpCircle, History } from 'lucide-react';
+import { X, Phone, MapPin, Calendar, CreditCard, Clock, Trash2, Edit, RefreshCw, Slash, FileText, User, HelpCircle, History, MessageCircle } from 'lucide-react';
 import { Member, MembershipPlan, formatDate } from '../types';
 import { Avatar } from './Avatar';
+import { getWhatsAppRenewUrl } from '../utils/whatsapp';
 
 interface MemberDetailsModalProps {
   isOpen: boolean;
@@ -204,6 +205,21 @@ export function MemberDetailsModal({
             </div>
 
             <div className="flex items-center gap-2">
+              {/* WhatsApp Send button */}
+              {member.status !== 'Cancelled' && (
+                <a
+                  id="modal-whatsapp-send-btn"
+                  href={getWhatsAppRenewUrl(member.phone, member.name, 'GYM-member', member.expiryDate, plan?.name || member.duration)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-xs hover:shadow-md cursor-pointer"
+                  title="Send WhatsApp message to renew plan"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 fill-current" />
+                  <span>Send WhatsApp</span>
+                </a>
+              )}
+
               <button
                 id="edit-member-btn"
                 onClick={() => {

@@ -355,6 +355,32 @@ export const INITIAL_MEMBERS: Member[] = [
     ]
   },
   {
+    id: 'mem-8',
+    name: 'Aman Singh',
+    phone: '123456789',
+    gender: 'Male',
+    age: 30,
+    address: 'E-44, Greater Kailash 1, New Delhi',
+    membershipPlanId: 'plan-1',
+    membershipFee: 2000,
+    paymentStatus: 'Paid',
+    joiningDate: '2026-05-15',
+    expiryDate: '2026-06-15',
+    duration: '1 Month',
+    status: 'Cancelled',
+    profilePhoto: 'https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/male.png',
+    history: [
+      {
+        id: 'hist-8',
+        planName: '1 Month Plan',
+        fee: 2000,
+        joiningDate: '2026-05-15',
+        expiryDate: '2026-06-15',
+        status: 'Cancelled',
+      }
+    ]
+  },
+  {
     id: 'mem-9',
     name: 'Vikram Mehta',
     phone: '123456789',

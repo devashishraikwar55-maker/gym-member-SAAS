@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Firebase Schema Blueprint",
+  "entities": {
+    "UserProfile": {
+      "collection": "users",
+      "description": "User profile and gym configuration document",
+      "fields": {
+        "email": { "type": "string", "description": "Owner email address" },
+        "displayName": { "type": "string", "description": "Display name" },
+        "gymName": { "type": "string", "description": "Gym/Club title" },
+        "ownerName": { "type": "string", "description": "Owner/Manager name" },
+        "currency": { "type": "string", "description": "Currency symbol" },
+        "createdAt": { "type": "string", "description": "ISO timestamp of creation" }
+      }
+    },
+    "Member": {
+      "collection": "users/{userId}/members",
+      "description": "Gym members belonging to the authenticated gym owner",
+      "fields": {
+        "id": { "type": "string", "description": "Unique member ID" },
+        "name": { "type": "string", "description": "Member full name" },
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "gender": { "type": "string", "description": "Male, Female, or Couple" },
+        "age": { "type": "number", "description": "Member age" },
+        "address": { "type": "string", "description": "Physical address" },
+        "membershipPlanId": { "type": "string", "description": "Associated plan ID" },
+        "membershipFee": { "type": "number", "description": "Membership fee amount" },
+        "paymentStatus": { "type": "string", "description": "Paid, Unpaid, or Pending" },
+        "joiningDate": { "type": "string", "description": "Joining date YYYY-MM-DD" },
+        "expiryDate": { "type": "string", "description": "Expiry date YYYY-MM-DD" },
+        "duration": { "type": "string", "description": "Plan duration string" },
+        "status": { "type": "string", "description": "Active, Expiring, Expired, or Cancelled" },
+        "profilePhoto": { "type": "string", "description": "Profile picture URL" },
+        "notes": { "type": "string", "description": "Staff notes" },
+        "history": { "type": "array", "description": "Renewal and payment history records" }
+      }
+    },
+    "MembershipPlan": {
+      "collection": "users/{userId}/plans",
+      "description": "Membership tiers and packages for the gym",
+      "fields": {
+        "id": { "type": "string", "description": "Unique plan identifier" },
+        "name": { "type": "string", "description": "Plan display name" },
+        "duration": { "type": "string", "description": "Duration label" },
+        "durationMonths": { "type": "number", "description": "Duration in months" },
+        "fee": { "type": "number", "description": "Price in currency units" },
+        "description": { "type": "string", "description": "Plan summary" },
+        "features": { "type": "array", "description": "List of inclusions" }
+      }
+    },
+    "ActivityLog": {
+      "collection": "users/{userId}/activityLogs",
+      "description": "Historical activity stream entries",
+      "fields": {
+        "id": { "type": "string", "description": "Unique log entry ID" },
+        "memberId": { "type": "string", "description": "Associated member ID" },
+        "memberName": { "type": "string", "description": "Associated member name" },
+        "type": { "type": "string", "description": "Action type" },
+        "description": { "type": "string", "description": "Description of action" },
+        "timestamp": { "type": "string", "description": "ISO timestamp" }
+      }
+    }
+  }
+}

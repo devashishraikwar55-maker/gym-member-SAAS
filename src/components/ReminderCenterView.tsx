@@ -6,10 +6,11 @@ import {
   Eye, 
   Search, 
   X,
-  AlertCircle
+  MessageCircle
 } from 'lucide-react';
 import { Member, SystemSettings, CURRENT_DATE_STR, getDaysDiff, formatDate } from '../types';
 import { Avatar } from './Avatar';
+import { getWhatsAppRenewUrl } from '../utils/whatsapp';
 
 interface ReminderCenterViewProps {
   members: Member[];
@@ -23,6 +24,7 @@ interface ReminderCenterViewProps {
 
 export function ReminderCenterView({ 
   members, 
+  settings,
   onSelectMember, 
   onRenewClick
 }: ReminderCenterViewProps) {
@@ -143,7 +145,20 @@ export function ReminderCenterView({
                       </td>
 
                       <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                          {/* Send WhatsApp Renewal Button */}
+                          <a
+                            id={`expiring-whatsapp-send-${member.id}`}
+                            href={getWhatsAppRenewUrl(member.phone, member.name, settings?.gymName, member.expiryDate, member.duration)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 border border-emerald-200/80 transition-all shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
+                            title="Send WhatsApp message to renew plan"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
+                            <span>Send</span>
+                          </a>
+
                           <button
                             id={`expiring-quick-view-btn-${member.id}`}
                             onClick={() => onSelectMember(member.id)}
