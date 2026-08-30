@@ -212,8 +212,20 @@ export function OnboardingSlides({
   return (
     <div 
       id="onboarding-slides-card"
-      className="w-full max-w-md bg-white p-7 sm:p-8 rounded-3xl shadow-2xl border border-brand-border flex flex-col justify-between min-h-[490px] relative overflow-hidden transition-all duration-300"
+      className="w-full max-w-md bg-white p-7 sm:p-9 rounded-3xl shadow-2xl border border-brand-border/80 flex flex-col justify-between min-h-[560px] sm:min-h-[600px] relative overflow-hidden transition-all duration-300"
     >
+      {/* Background Image Layer (high visibility, smooth fade from bottom) */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none rounded-3xl">
+        <img 
+          src="https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/onboarding.png" 
+          alt="Onboarding Background"
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-cover object-center opacity-95 select-none"
+        />
+        {/* Clean fade from bottom to keep bottom buttons & controls distinct and readable */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/55 to-transparent pointer-events-none" />
+      </div>
+
       {/* Subtle ambient background glow */}
       <div 
         className={`absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-48 ${
@@ -222,7 +234,7 @@ export function OnboardingSlides({
             : isAuthSlide 
             ? 'bg-indigo-500/15' 
             : currentFeatureSlide?.glowColor
-        } rounded-full blur-3xl -z-0 pointer-events-none transition-all duration-500`} 
+        } rounded-full blur-3xl z-0 pointer-events-none transition-all duration-500`} 
       />
 
       {/* Top Header: App Branding, Slide Indicator & Skip Button */}
@@ -352,7 +364,7 @@ export function OnboardingSlides({
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: direction * -40, scale: 0.98 }}
                 transition={{ duration: 0.24, ease: 'easeOut' }}
-                className="flex flex-col items-center w-full space-y-4 py-4"
+                className="flex flex-col items-center w-full space-y-5 py-6 sm:py-8"
               >
                 {/* Clean Icon with Soft Gradient */}
                 <div className="relative mb-2">

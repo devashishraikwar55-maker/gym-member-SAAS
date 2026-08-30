@@ -48,16 +48,16 @@ export function OnboardingModal({
           transition={{ type: 'spring', damping: 26, stiffness: 320 }}
           className="bg-[#00B5B0] text-[#12171A] w-full max-w-sm sm:max-w-md rounded-[36px] shadow-2xl border border-teal-400/30 overflow-hidden relative flex flex-col my-auto"
         >
-          {/* Full Cover Zoomed Background Image */}
-          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          {/* Background Image Layer (high visibility, smooth fade from bottom) */}
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none rounded-[36px]">
             <img 
-              src="https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/onbording%20bg.png" 
+              src="https://qsvgrkeitnnjlcpxpewu.supabase.co/storage/v1/object/public/gym-icon-m-f/onboarding.png" 
               alt="Onboarding Background"
-              className="w-full h-full object-cover object-center scale-160 sm:scale-145 origin-center transition-transform duration-700"
+              className="w-full h-full object-cover object-center opacity-95 select-none"
               referrerPolicy="no-referrer"
             />
-            {/* Gradient & Backdrop Overlay to make form fields and typography ultra crisp */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#00B5B0]/50 to-[#00B5B0]/95" />
+            {/* Clean fade from bottom to keep bottom action buttons distinct */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#00B5B0] via-[#00B5B0]/55 to-transparent pointer-events-none" />
           </div>
 
           {/* Header Controls (Close & Step Pill) */}
